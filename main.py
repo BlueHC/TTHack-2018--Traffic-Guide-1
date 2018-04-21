@@ -13,6 +13,7 @@ class Main:
         bikers = 0
         car_drivers = 0
         pt_users = 0
+        counter = 0
         for route in self.generator.routes["stations"][affected_routes]:
             got_first_stop = False
             for i, stop in enumerate(route):
@@ -24,16 +25,15 @@ class Main:
                         bikers += bike_prob * 1
                         car_drivers += car_prob * 1
                         pt_users += pt_prob * 1
+                        counter += 1
                     else:
                         walking_prob, bike_prob, car_prob, pt_prob = self.generator.generate_features_for_dest(stop, route[0])
                         walkers += walking_prob * 1
                         bikers += bike_prob * 1
                         car_drivers += car_prob * 1
                         pt_users += pt_prob * 1
-        print("Walkers: %f" % walkers)
-        print("Bikers: %f" % bikers)
-        print("Car drivers: %f" % car_drivers)
-        print("PT users: %f" % pt_users)
+                        counter += 1
+        return walkers / counter, bikers / counter, car_drivers / counter, pt_users / counter
 
 if __name__ == "__main__":
     main = Main()
