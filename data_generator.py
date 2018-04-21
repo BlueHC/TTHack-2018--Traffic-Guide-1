@@ -25,24 +25,23 @@ class DataGenerator:
         # self._load_s_bahn_routes()
         pass
 
-    
     def generate_weather(self):
         weather_id = np.random.choice([
-                        211, # thunderstorm
-                        310, # light drizzle
-                        500, # rain
-                        602, # heavy snow
-                        741, # fog
-                        800, # clear
-                        953, # gentle breeze
-                        ],
-                        p = [0.05, 0.1, 0.1, 0.05, 0.1, 0.5, 0.1]
-                    )
-        
+            211,  # thunderstorm
+            310,  # light drizzle
+            500,  # rain
+            602,  # heavy snow
+            741,  # fog
+            800,  # clear
+            953,  # gentle breeze
+        ],
+            p=[0.05, 0.1, 0.1, 0.05, 0.1, 0.5, 0.1]
+        )
+
         temp = np.random.randint(-2, 37) + 273.15
-        
-        return {"WeatherTypeID":weather_id, "TemperatureInKelvin":temp}
-        
+
+        return {"WeatherTypeID": weather_id, "TemperatureInKelvin": temp}
+
     def bike_factor_for_weather(self, weather):
         id = weather["WeatherTypeID"]
         temperature = weather["TemperatureInKelvin"] - 273.15
@@ -67,7 +66,7 @@ class DataGenerator:
         return bike_probability
 
     def get_foot_factor(self, weather, distance):
-        base_prob = 1 - (distance * 200)
+        base_prob = max(0, 1 - (distance * 200))
         return base_prob * self.bike_factor_for_weather(weather)
 
     def _load_s_bahn_routes(self):
@@ -122,8 +121,9 @@ class DataGenerator:
         for index, route_with_id in self.routes.iterrows():
             route = route_with_id["stations"]
             for i, station in enumerate(route):
-                if station1 == station and len(route) > (i+1) and station2 == route[i+1] or \
-                                                station2 == station and len(route) > (i+1) and station1 == route[i+1]:
+                if station1 == station and len(route) > (i + 1) and station2 == route[i + 1] or \
+                                                station2 == station and len(route) > (i + 1) and station1 == route[
+                                    i + 1]:
                     affected_routes.append(index)
                     break
         self.unaffected_routes = self.routes.copy().drop(affected_routes)
@@ -136,7 +136,7 @@ class DataGenerator:
         :param dest_station: The station the person wants to travel to
         :return: probabilities for walking, biking, renting a car or taking other public transport
         """
-        #weather = weatherApi.currentWeatherData()
+        # weather = weatherApi.currentWeatherData()
         weather = self.generate_weather()
         bike_fact = self.bike_factor_for_weather(weather)
         lat1, lon1 = self.mapper.stop_to_coordinates(start_station)
@@ -158,8 +158,7 @@ class DataGenerator:
         pt_fact = 0.5
         if len(alt_pt) == 0:
             pt_fact = 0
-
-
+        return self.modal_split(foot_fact, bike_fact, cars_fact, pt_fact)
 
     def modal_split(self, foot_fact, bike_fact, car_fact, pt_fact):
         """
@@ -177,7 +176,6 @@ class DataGenerator:
         pt = base_pt * pt_fact
         normal_factor = foot + bike + car + pt
         return foot / normal_factor, bike / normal_factor, car / normal_factor, pt / normal_factor
-
 
     def generate_dummy_usage(self):
         for j, route in enumerate(self.routes["stations"]):

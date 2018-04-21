@@ -8,9 +8,7 @@ class Main:
         self.generator = DataGenerator()
 
     def add_disruption(self, begin, end, time=12):
-        print(len(self.generator.routes))
         affected_routes = self.generator.filter_disrupted_routes(begin, end)
-        print(len(self.generator.routes))
         walkers = 0
         bikers = 0
         car_drivers = 0
@@ -21,9 +19,21 @@ class Main:
                 if stop == begin or stop == end:
                     if got_first_stop:
                         walking_prob, bike_prob, car_prob, pt_prob = self.generator.generate_features_for_dest(stop, route[-1])
-                        #walkers += walking_prob * TODO: wait for capacity
+                        #TODO: replace 1 with capacity
+                        walkers += walking_prob * 1
+                        bikers += bike_prob * 1
+                        car_drivers += car_prob * 1
+                        pt_users += pt_prob * 1
                     else:
                         walking_prob, bike_prob, car_prob, pt_prob = self.generator.generate_features_for_dest(stop, route[0])
+                        walkers += walking_prob * 1
+                        bikers += bike_prob * 1
+                        car_drivers += car_prob * 1
+                        pt_users += pt_prob * 1
+        print("Walkers: %f" % walkers)
+        print("Bikers: %f" % bikers)
+        print("Car drivers: %f" % car_drivers)
+        print("PT users: %f" % pt_users)
 
 if __name__ == "__main__":
     main = Main()
