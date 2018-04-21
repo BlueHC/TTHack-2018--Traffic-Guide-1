@@ -18,19 +18,12 @@ def amountStadtRadAvailable():
         resultLat = payloadjson['marker'][i]['lat']
         resultLng = payloadjson['marker'][i]['lng']
         resultAmount = len(payloadjson['marker'][i]['hal2option']['bikelist'])
-        resultTuple = (float(resultLat), float(resultLng), resultAmount)
+        resultTuple = (resultLat, resultLng, resultAmount)
         amountBikesTotal += resultAmount
         result.append(resultTuple)
 
     # Number of stations and bikes in total
     # print('Number of stations: ' + str(numberStations))
     # print('Number of bikes: ' + str(amountBikesTotal))
-    print(result[0])
+        
     return result
-
-def amountStadtRadAvailableForStation(lat, lon):
-    station_overview = amountStadtRadAvailable()
-    print(station_overview)
-    for station in station_overview:
-        if station[0] == lat and station[1] == lon:
-            return station[2]
