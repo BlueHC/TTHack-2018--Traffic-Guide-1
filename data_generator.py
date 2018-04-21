@@ -46,27 +46,26 @@ class DataGenerator:
         id = weather["WeatherTypeID"]
         temperature = weather["TemperatureInKelvin"] - 273.15
         # see https://openweathermap.org/weather-conditions
-        if 200 <= id <= 300:
-            bike_probability = 0
-        elif id in [800, 801, 951, 952, 953]:
-            bike_probability = 0.4
+        if id in [800, 801, 951, 952, 953]:
+            bike_factor = 1
         elif id in [802, 803, 804, 954, 955, 701, 741, 600] or 300 <= id <= 311:
-            bike_probability = 0.3
+            bike_factor = 0.7
         elif 312 <= id <= 321:
-            bike_probability = 0.2
+            bike_factor = 0.4
         elif id in [500, 501, 601, 615, 616, 721]:
-            bike_probability = 0.1
+            bike_factor = 0.2
         else:
-            bike_probability = 0
+            bike_factor = 0
         # temperature adjustment
         if temperature < 5 or temperature > 30:
-            bike_probability = bike_probability * 0
+            bike_factor = bike_factor * 0
         elif 15 < temperature < 25:
-            bike_probability = bike_probability * 1.2
-        return bike_probability
+            bike_factor = bike_factor * 1.2
+        return bike_factor
 
     def get_foot_factor(self, weather, distance):
-        base_prob = max(0, 1 - (distance * 200))
+        print("Distance: %f" % distance)
+        base_prob = max(0, 1 - (distance * 100))
         return base_prob * self.bike_factor_for_weather(weather)
 
     def _load_s_bahn_routes(self):
@@ -154,11 +153,11 @@ class DataGenerator:
                         if any(route[z] == dest[0] for dest in possible_dest_stations):
                             alt_pt.append(route)
         near_cars = self.mapper.cars_in_range(lat1, lon1)
-        cars_fact = len(near_cars) / 10
+        car_fact = len(near_cars) / 20
         pt_fact = 0.5
         if len(alt_pt) == 0:
             pt_fact = 0
-        return self.modal_split(foot_fact, bike_fact, cars_fact, pt_fact)
+        return self.modal_split(foot_fact, bike_fact, car_fact, pt_fact)
 
     def modal_split(self, foot_fact, bike_fact, car_fact, pt_fact):
         """
@@ -166,10 +165,10 @@ class DataGenerator:
         collection of factors for each modality
         """
         print("Factors: %f, %f, %f, %f" % (foot_fact, bike_fact, car_fact, pt_fact))
-        base_bike = 0.2
-        base_car = 0.45
+        base_bike = 0.25
+        base_car = 0.25
         base_foot = 0.1
-        base_pt = 0.25
+        base_pt = 0.4
         foot = base_foot * foot_fact
         bike = base_bike * bike_fact
         car = base_car * car_fact
@@ -197,7 +196,6 @@ def _test_routing():
     gen = DataGenerator()
     gen.filter_disrupted_routes("Hamburg Hbf", "Jungfernstieg")
     gen.generate_features_for_dest("Hamburg Hbf", "Jungfernstieg")
-    gen.combine_sbahn_into_normal_routes()
     # print(gen.routes)
     gen.generate_dummy_usage()
 

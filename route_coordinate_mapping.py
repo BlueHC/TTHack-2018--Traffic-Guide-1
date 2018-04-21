@@ -48,7 +48,10 @@ class HVVCoordinateMapper:
         """ Calculate euclidean distance between two points, defined by their latitude and longitude"""
         start_vec = np.array([lat1, lon1])
         dest_vec = np.array([lat2, lon2])
+        print(start_vec)
+        print(dest_vec)
         dist = np.linalg.norm(start_vec - dest_vec)  # euclidean distance between start and destination coordinates
+        print(dist)
         return dist
 
     def bike_stations_in_range(self, lat_start, lon_start, range=0.0025):
