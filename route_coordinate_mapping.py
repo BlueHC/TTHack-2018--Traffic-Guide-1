@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import gpxpy
 import math
+from sharingMobilityAPI import sharingMobilityAroundLocation
 
 
 class HVVCoordinateMapper:
@@ -66,6 +67,14 @@ class HVVCoordinateMapper:
             if dist <= range:
                 stations.append((name, dist))
         return stations
+
+    def cars_in_range(self, lat_start, lon_start, range=0.005):
+        nearby_cars = []
+        for car in sharingMobilityAroundLocation(lat_start, lon_start):
+            dist = self.get_distance(lat_start, lon_start, car[0], car[1])
+            if dist <= range:
+                nearby_cars.append((lat, lon, dist))
+        return nearby_cars
 
 
 if __name__ == "__main__":
