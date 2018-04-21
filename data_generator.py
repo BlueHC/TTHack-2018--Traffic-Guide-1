@@ -107,6 +107,22 @@ class DataGenerator:
             total_count += c[1]
         return [(station, count/total_count) for (station, count) in count_list]
 
+    def filter_disrupted_routes(self, station1, station2):
+        """
+        Filters out routes disrupted by the disruption between station1 and station2
+        :param station1: The first station between the disruption occured
+        :param station2: The second station between the disruption occured
+        """
+        affected_routes = []
+        for index, route_with_id in self.routes.iterrows():
+            route = route_with_id["stations"]
+            for i, station in enumerate(route):
+                if station1 == station and len(route) > (i+1) and station2 == route[i+1] \
+                    or station2 == station and len(route) > (i+1) and station1 == route[i+1]:
+                    affected_routes.append(index)
+                    break
+        self.unaffected_routes = self.routes.copy().drop(affected_routes)                 
+
     def generate_features_for_dest(self, start_station, dest_station):
         """
         Generates modal probabilities for a person wanting to travel to dest_station
@@ -126,18 +142,14 @@ class DataGenerator:
         near_bus_stations = self.mapper.bus_stations_in_range(lat1, lon1)
         possible_dest_stations = self.mapper.bus_stations_in_range(lat2, lon2)
         alt_pt = []
-        disrupted_routes = []
-        for route in self.routes["stations"].values:
+        for route in self.unaffected_routes["stations"].values:
             for i, station1 in enumerate(route):
-                if station1 == start_station and len(route) > (i+1) and route[i+1] == dest_station:
-                    disrupted_routes.append(route)
-                    break
                 if any(station1 == origin[0] for origin in near_bus_stations):
                     for z in range(i, len(route)):
                         if any(route[z] == dest[0] for dest in possible_dest_stations):
                             alt_pt.append(route)
         if alt_pt != []:
-            a = 0 #TODO
+            print("Alternative found!")
             
 
     def generate_modal_split(self, start, dest):
@@ -159,6 +171,7 @@ class DataGenerator:
 
 def _test_routing():
     gen = DataGenerator()
+    gen.filter_disrupted_routes("Hamburg Hbf", "Jungfernstieg")
     gen.generate_features_for_dest("Hamburg Hbf", "Jungfernstieg")
 
 def _test_probable_destination():
