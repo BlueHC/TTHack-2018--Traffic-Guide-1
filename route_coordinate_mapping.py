@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import gpxpy
+import math
 
 
 class HVVCoordinateMapper:
@@ -17,8 +18,11 @@ class HVVCoordinateMapper:
     def _load_bus_data(self, file="data/stops.txt"):
         self.df = pd.read_csv(filepath_or_buffer=file, sep=",")
         for i, row in self.df.iterrows():
-            self.stop_to_index[row["stop_name"]] = i
-            self.lat_lon_to_index[(row["stop_lat"], row["stop_lon"])] = i
+            # only record coordinates of 'parent stations'
+            if isinstance(row["parent_station"], float) and math.isnan(row["parent_station"]):
+                self.stop_to_index[row["stop_name"]] = i
+                self.lat_lon_to_index[(row["stop_lat"], row["stop_lon"])] = i
+        print(len(self.stop_to_index))
 
     def _load_bike_data(self, file='data/1-StadtRAD_Hamburg_Stationen.gpx'):
         with open(file, 'r') as f:
@@ -57,6 +61,7 @@ class HVVCoordinateMapper:
             if dist < range:
                 stations.append((lat, lon, dist))
         return stations
+
 
 if __name__ == "__main__":
     mapper = HVVCoordinateMapper()
