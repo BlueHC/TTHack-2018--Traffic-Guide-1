@@ -11,6 +11,7 @@ class HVVCoordinateMapper:
         self.lat_lon_to_index = {}
         self.index_to_lat_lon = {}
         self.bike_coordinates = []
+        self.stop_to_parent = {}
         self._load_bus_data()
         self._load_bike_data()
 
@@ -23,6 +24,8 @@ class HVVCoordinateMapper:
                 self.stop_to_index[row["stop_name"]] = i
                 self.lat_lon_to_index[(row["stop_lat"], row["stop_lon"])] = i
                 self.index_to_lat_lon[i] = (row["stop_lat"], row["stop_lon"])
+            else:
+                self.stop_to_parent[row["stop_id"]] = row["parent_station"]
 
     def _load_bike_data(self, file='data/1-StadtRAD_Hamburg_Stationen.gpx'):
         print('Loading bike data')
@@ -51,7 +54,7 @@ class HVVCoordinateMapper:
         bike_stations = []
         for lat, lon in self.bike_coordinates:
             dist = self.get_distance(lat_start, lon_start, lat, lon)
-            if dist < range:
+            if dist <= range:
                 bike_stations.append((lat, lon, dist))
         return bike_stations
 
@@ -60,7 +63,7 @@ class HVVCoordinateMapper:
         for name, index in self.stop_to_index.items():
             (lat, lon) = self.index_to_lat_lon[index]
             dist = self.get_distance(lat_start, lon_start, lat, lon)
-            if dist < range:
+            if dist <= range:
                 stations.append((name, dist))
         return stations
 
