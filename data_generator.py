@@ -22,6 +22,24 @@ class DataGenerator:
         #self._load_s_bahn_routes()
         pass
 
+    
+    def generate_weather(self):
+        weather_id = np.random.choice([
+                        211, # thunderstorm
+                        310, # light drizzle
+                        500, # rain
+                        602, # heavy snow
+                        741, # fog
+                        800, # clear
+                        953, # gentle breeze
+                        ],
+                        p = [0.05, 0.1, 0.1, 0.05, 0.1, 0.5, 0.1]
+                    )
+        
+        temp = np.random.randint(-2, 37) + 273.15
+        
+        return {"WeatherTypeID":weather_id, "TemperatureInKelvin":temp}
+        
     def bike_probabilities_for_weather(self, weather):
         id = weather["WeatherTypeID"]
         temperature = weather["TemperatureInKelvin"] - 273.15
@@ -96,7 +114,8 @@ class DataGenerator:
         :param dest_station: The station the person wants to travel to
         :return: probabilities for walking, biking, renting a car or taking other public transport
         """
-        weather = weatherApi.currentWeatherData()
+        #weather = weatherApi.currentWeatherData()
+        weather = self.generate_weather()
         bike_prob = self.bike_probabilities_for_weather(weather)
         lat1, lon1 = self.mapper.stop_to_coordinates(start_station)
         bike_stations = self.mapper.bike_stations_in_range(lat1, lon1)
