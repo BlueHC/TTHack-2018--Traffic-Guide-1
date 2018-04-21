@@ -49,10 +49,10 @@ class DataGenerator:
 
     def generate_features_for_dest(self, start_station, dest_station):
         """
-        Generates
-        :param start_station:
-        :param dest_station:
-        :return:
+        Generates probabilities for a person wanting to travel to dest_station
+        :param start_station: The station where the person is stranded
+        :param dest_station: The station the person wants to travel to
+        :return: probabilities for walking, biking, renting a car or taking other public transport
         """
         weather = weatherApi.currentWeatherData()
         bike_prob = self.bike_probabilities_for_weather(weather)
@@ -61,6 +61,8 @@ class DataGenerator:
         lat2, lon2 = self.mapper.stop_to_coordinates(dest_station)
         dest_distance = self.mapper.get_distance(lat1, lon1, lat2, lon2)
         foot_prob = self.get_foot_prob(weather, dest_distance)
+        near_bus_stations = self.mapper.bus_stations_in_range(lat1, lon1)
+        possible_dest_stations = self.mapper.bus_stations_in_range(lat2, lon2)
 
     def generate_modal_split(self, start, dest):
         following_stations = self.get_stations_on_route(start, dest)
