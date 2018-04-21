@@ -81,7 +81,11 @@ class DataGenerator:
                             stops_to_passengers[station] = int(float(exit.replace(",", ".")))
                     elif station == start_station:
                         past_start_station = True
-        return [(station, stops_to_passengers[station]) for station in stops_to_passengers.keys()]
+        count_list = [(station, stops_to_passengers[station]) for station in stops_to_passengers.keys()]
+        total_count = 0
+        for c in count_list:
+            total_count += c[1]
+        return [(station, count/total_count) for (station, count) in count_list]
 
     def generate_features_for_dest(self, start_station, dest_station, bus_routes):
         """
