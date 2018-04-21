@@ -1,6 +1,7 @@
 import pandas as pd
 import weatherApi
 from route_coordinate_mapping import HVVCoordinateMapper
+from routing import load_routes
 
 
 class DataGenerator:
@@ -15,6 +16,7 @@ class DataGenerator:
 
     def __init__(self):
         self.mapper = HVVCoordinateMapper()
+        self.routes = load_routes()
         pass
 
     def bike_probabilities_for_weather(self, weather):
@@ -47,7 +49,7 @@ class DataGenerator:
     def probable_destination(self):
         df = pd.read_csv(filepath_or_buffer="data/Hackathon.csv", delimiter=";")
 
-    def generate_features_for_dest(self, start_station, dest_station, bus_routes):
+    def generate_features_for_dest(self, start_station, dest_station):
         """
         Generates probabilities for a person wanting to travel to dest_station
         :param start_station: The station where the person is stranded
@@ -65,7 +67,7 @@ class DataGenerator:
         near_bus_stations = self.mapper.bus_stations_in_range(lat1, lon1)
         possible_dest_stations = self.mapper.bus_stations_in_range(lat2, lon2)
         alt_pt = []
-        for route in bus_routes:
+        for route in self.routes["stations"]:
             for i, station1 in enumerate(route):
                 if any(station1 == origin[0] for origin in near_bus_stations):
                     for z in range(i, len(route)):
@@ -89,4 +91,4 @@ class DataGenerator:
 if __name__ == "__main__":
     gen = DataGenerator()
     routes = [["Hamburg Hbf", "Bornkampsweg", "Jungfernstieg"], ["Jungfernstieg", "Bornkampsweg", "Hamburg Hbf"], ["Hamburg Hbf", "Bornkampsweg"]]
-    gen.generate_features_for_dest("Hamburg Hbf", "Jungfernstieg", routes)
+    gen.generate_features_for_dest("Hamburg Hbf", "Jungfernstieg")
