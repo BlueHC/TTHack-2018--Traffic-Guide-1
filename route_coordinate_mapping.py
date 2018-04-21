@@ -22,7 +22,6 @@ class HVVCoordinateMapper:
             if isinstance(row["parent_station"], float) and math.isnan(row["parent_station"]):
                 self.stop_to_index[row["stop_name"]] = i
                 self.lat_lon_to_index[(row["stop_lat"], row["stop_lon"])] = i
-        print(len(self.stop_to_index))
 
     def _load_bike_data(self, file='data/1-StadtRAD_Hamburg_Stationen.gpx'):
         with open(file, 'r') as f:
