@@ -1,4 +1,6 @@
 import pandas as pd
+import numpy as np
+import gpxpy
 
 
 class HVVCoordinateMapper:
@@ -8,12 +10,21 @@ class HVVCoordinateMapper:
         self.lat_lon_to_index = {}
         self.index_to_lat = {}
         self.index_to_lon = {}
+        self.bike_coordinates = []
+        self._load_bus_data()
+        self._load_bike_data()
 
-    def load_bus_data(self, file="data/stops.txt"):
+    def _load_bus_data(self, file="data/stops.txt"):
         self.df = pd.read_csv(filepath_or_buffer=file, sep=",")
         for i, row in self.df.iterrows():
             self.stop_to_index[row["stop_name"]] = i
             self.lat_lon_to_index[(row["stop_lat"], row["stop_lon"])] = i
+
+    def _load_bike_data(self, file='data/1-StadtRAD_Hamburg_Stationen.gpx'):
+        with open(file, 'r') as f:
+            gpx = gpxpy.parse(f)
+        for p in gpx.waypoints:
+            self.bike_coordinates.append((p.latitude, p.longitude))
 
     def stop_to_coordinates(self, stop_name):
         row = self.df.iloc[self.stop_to_index[stop_name]]
@@ -23,11 +34,37 @@ class HVVCoordinateMapper:
         row = self.df.iloc[self.lat_lon_to_index[(latitude, longitude)]]
         return row["stop_name"]
 
+    @staticmethod
+    def get_distance(lat1, lon1, lat2, lon2):
+        """ Calculate euclidean distance between two points, defined by their latitude and longitude"""
+        start_vec = np.array([lat1, lon1])
+        dest_vec = np.array([lat2, lon2])
+        dist = np.linalg.norm(start_vec - dest_vec)  # euclidean distance between start and destination coordinates
+        return dist
+
+    def bike_stations_in_range(self, lat_start, lon_start, range=0.0025):
+        bike_stations = []
+        for lat, lon in self.bike_coordinates:
+            dist = self.get_distance(lat_start, lon_start, lat, lon)
+            if dist < range:
+                bike_stations.append((lat, lon, dist))
+        return bike_stations
+
+    def bus_stations_in_range(self, lat_start, lon_start, range=0.0):
+        stations = []
+        for lat, lon in zip(self.df["stop_lat"], self.df["stop_lon"]):
+            dist = self.get_distance(lat_start, lon_start, lat, lon)
+            if dist < range:
+                stations.append((lat, lon, dist))
+        return stations
 
 if __name__ == "__main__":
     mapper = HVVCoordinateMapper()
-    mapper.load_bus_data()
-    lat, lon = mapper.stop_to_coordinates("Billhorner Deich")
+    lat, lon = mapper.stop_to_coordinates("Bornkampsweg")
     print(lat, lon)
-    name = mapper.coordinates_to_stop(lat, lon)
-    print(name)
+    bike_stations = mapper.bike_stations_in_range(lat, lon)
+    print(bike_stations)
+    lat, lon = mapper.stop_to_coordinates("Bornkampsweg")
+    stations = mapper.bus_stations_in_range(lat, lon)
+    for s in stations:
+        print(mapper.coordinates_to_stop(s[0], s[1]))
