@@ -22,6 +22,33 @@ class DataGenerator:
         self.routes_probs = []
         self.sbahn_routes = []
         # self._load_s_bahn_routes()
+        self.generate_dummy_usage()
+        self.time_factor = {
+            0: 1.1,
+            1: 1.0,
+            2: 1.0,
+            3: 1.0,
+            4: 1.0,
+            5: 1.0,
+            6: 1.4,
+            7: 1.7,
+            8: 1.7,
+            9: 1.6,
+            10: 1.5,
+            11: 1.3,
+            12: 1.3,
+            13: 1.3,
+            14: 1.3,
+            15: 1.3,
+            16: 1.6,
+            17: 1.7,
+            18: 1.7,
+            19: 1.4,
+            20: 1.3,
+            21: 1.2,
+            22: 1.1,
+            23: 1.0
+        }
         pass
 
     
@@ -127,7 +154,7 @@ class DataGenerator:
                     break
         self.unaffected_routes = self.routes.copy().drop(affected_routes)                 
 
-    def generate_features_for_dest(self, start_station, dest_station):
+    def generate_features_for_dest(self, start_station, dest_station, time):
         """
         Generates modal probabilities for a person wanting to travel to dest_station
         :param start_station: The station where the person is stranded
@@ -145,14 +172,17 @@ class DataGenerator:
         near_bus_stations = self.mapper.bus_stations_in_range(lat1, lon1)
         possible_dest_stations = self.mapper.bus_stations_in_range(lat2, lon2)
         alt_pt = []
-        for route in self.unaffected_routes["stations"].values:
+        for index, route_with_id in self.unaffected_routes.iterrows():
+            route = route_with_id["stations"]
+            route_id = route_with_id["id"]
             for i, station1 in enumerate(route):
                 if any(station1 == origin[0] for origin in near_bus_stations):
                     for z in range(i, len(route)):
                         if any(route[z] == dest[0] for dest in possible_dest_stations):
-                            alt_pt.append(route)
+                            alt_pt.append((route_id, station1, self.get_used_capacity(route_id, station1, time)))
         if alt_pt != []:
             print("Alternative found!")
+        print(alt_pt)
 
     def generate_modal_split(self, start, dest):
         following_stations = self.get_stations_on_route(start, dest)
@@ -163,6 +193,13 @@ class DataGenerator:
 
     def combine_sbahn_into_normal_routes(self):
         pass
+
+    def get_used_capacity(self, route_id, station, time):
+        route_capacities = self.routes_probs.loc[self.routes_probs[1] == route_id]
+        for stop in route_capacities[0].values[0]:
+            if stop[0] == station:
+                capacity = (stop[1] * 100) ** 2.32 / 100 
+                return min(0.95, self.time_factor[time] * capacity)
 
     def generate_dummy_usage(self):
         for j, route in enumerate(self.routes["stations"]):
@@ -177,7 +214,6 @@ class DataGenerator:
                 route_prob[i] = (stop, prob / total_prob)
             self.routes_probs.append((route_prob, self.routes["id"][j]))
         self.routes_probs = pd.DataFrame(self.routes_probs)
-        print(self.routes_probs)
 
     def get_probabilities_for_route(self, start, last_stop):
         pass
@@ -195,10 +231,8 @@ class DataGenerator:
 def _test_routing():
     gen = DataGenerator()
     gen.filter_disrupted_routes("Hamburg Hbf", "Jungfernstieg")
-    gen.generate_features_for_dest("Hamburg Hbf", "Jungfernstieg")
-    gen.combine_sbahn_into_normal_routes()
-    # print(gen.routes)
-    gen.generate_dummy_usage()
+    gen.generate_features_for_dest("Hamburg Hbf", "Jungfernstieg", 17)
+    gen.combine_sbahn_into_normal_routes() 
 
 
 def _test_probable_destination():
