@@ -1,5 +1,6 @@
 import pandas as pd
 import weatherApi
+import numpy as np
 from route_coordinate_mapping import HVVCoordinateMapper
 
 
@@ -15,6 +16,8 @@ class DataGenerator:
 
     def __init__(self):
         self.mapper = HVVCoordinateMapper()
+        self.routes = []
+        self._load_s_bahn_routes()
         pass
 
     def bike_probabilities_for_weather(self, weather):
@@ -44,12 +47,45 @@ class DataGenerator:
         base_prob = 1 - (distance * 200)
         return base_prob * self.bike_probabilities_for_weather(weather)
 
-    def probable_destination(self):
+    def _load_s_bahn_routes(self):
+        print('Loading S-Bahn Routes')
         df = pd.read_csv(filepath_or_buffer="data/Hackathon.csv", delimiter=";")
+        current_route = [248206]
+        for i, row in df.iterrows():
+            if row["Zugnr"] == current_route[0]:
+                current_route.append((row["Station"], row["Einsteiger"], row["Aussteiger"]))
+            else:
+                self.routes.append(current_route)
+                current_route = [row["Zugnr"]]
+                current_route.append((row["Station"], row["Einsteiger"], row["Aussteiger"]))
+        print('Finished loading S-Bahn Routes')
+
+    def probable_destination(self, start_station, dest_station):
+        """
+        Generates relative proportions of people wanting to exit on stations between start_station and dest_station
+        :return: a list of stations between start_station and dest_station (including dest_station) along with the
+                 proportion of people wanting to exit there
+        """
+        stops_to_passengers = {}
+        for r in self.routes:
+            if len(r) > 1 and r[-1][0] == dest_station:
+                past_start_station = False
+                for (station, entr, exit) in r[1:]:
+                    if past_start_station:
+                        try:
+                            if stops_to_passengers[station] is None:
+                                stops_to_passengers[station] = int(float(exit.replace(",", ".")))
+                            else:
+                                stops_to_passengers[station] = stops_to_passengers[station] + int(float(exit.replace(",", ".")))
+                        except KeyError:
+                            stops_to_passengers[station] = int(float(exit.replace(",", ".")))
+                    elif station == start_station:
+                        past_start_station = True
+        return [(station, stops_to_passengers[station]) for station in stops_to_passengers.keys()]
 
     def generate_features_for_dest(self, start_station, dest_station):
         """
-        Generates probabilities for a person wanting to travel to dest_station
+        Generates modal probabilities for a person wanting to travel to dest_station
         :param start_station: The station where the person is stranded
         :param dest_station: The station the person wants to travel to
         :return: probabilities for walking, biking, renting a car or taking other public transport
@@ -66,6 +102,11 @@ class DataGenerator:
 
     def generate_modal_split(self, start, dest):
         following_stations = self.get_stations_on_route(start, dest)
+        base_pt=0.25
+        base_bike=0.2
+        base_car=0.45
+        base_foot=0.1
+
 
     def get_stations_on_route(self, start, dest):
         return []
@@ -79,3 +120,5 @@ class DataGenerator:
 
 if __name__ == "__main__":
     gen = DataGenerator()
+    ret = gen.probable_destination("Aumühle", "Elbgaustraße")
+    print(ret)
