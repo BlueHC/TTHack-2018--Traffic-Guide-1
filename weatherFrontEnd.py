@@ -85,6 +85,8 @@ def weatherFrontEnd():
 
     return resultJson
 
+print(weatherFrontEnd())
+
 
 
 
