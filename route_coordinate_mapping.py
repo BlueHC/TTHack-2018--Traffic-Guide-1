@@ -50,10 +50,21 @@ class HVVCoordinateMapper:
                 bike_stations.append((lat, lon, dist))
         return bike_stations
 
+    def bus_stations_in_range(self, lat_start, lon_start, range=0.0):
+        stations = []
+        for lat, lon in zip(self.df["stop_lat"], self.df["stop_lon"]):
+            dist = self.get_distance(lat_start, lon_start, lat, lon)
+            if dist < range:
+                stations.append((lat, lon, dist))
+        return stations
 
 if __name__ == "__main__":
     mapper = HVVCoordinateMapper()
     lat, lon = mapper.stop_to_coordinates("Bornkampsweg")
     print(lat, lon)
-    stations = mapper.bike_stations_in_range(lat, lon)
-    print(stations)
+    bike_stations = mapper.bike_stations_in_range(lat, lon)
+    print(bike_stations)
+    lat, lon = mapper.stop_to_coordinates("Bornkampsweg")
+    stations = mapper.bus_stations_in_range(lat, lon)
+    for s in stations:
+        print(mapper.coordinates_to_stop(s[0], s[1]))
