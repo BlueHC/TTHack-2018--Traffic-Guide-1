@@ -98,3 +98,5 @@ if __name__ == "__main__":
     plt.xlabel("Epoch")
     plt.ylabel("MSE Loss")
     plt.savefig(filename + ".png")
+    
+    torch.save(model.state_dict(), filename + ".model")
