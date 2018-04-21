@@ -10,10 +10,10 @@ class Predictor():
     
     def predict(self, scenarios, weights):
         distribution = np.array([0]*self.model.output_size)
-        for scenario in zip(scenarios, weights):
+        for scenario, weight in zip(scenarios, weights):
             output = self.model(scenario).numpy()
             output /= sum(output)
-            distribution += output * weights
+            distribution += output * weight
         
         return distribution
         
