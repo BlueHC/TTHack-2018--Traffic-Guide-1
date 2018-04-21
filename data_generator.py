@@ -24,6 +24,24 @@ class DataGenerator:
         # self._load_s_bahn_routes()
         pass
 
+    
+    def generate_weather(self):
+        weather_id = np.random.choice([
+                        211, # thunderstorm
+                        310, # light drizzle
+                        500, # rain
+                        602, # heavy snow
+                        741, # fog
+                        800, # clear
+                        953, # gentle breeze
+                        ],
+                        p = [0.05, 0.1, 0.1, 0.05, 0.1, 0.5, 0.1]
+                    )
+        
+        temp = np.random.randint(-2, 37) + 273.15
+        
+        return {"WeatherTypeID":weather_id, "TemperatureInKelvin":temp}
+        
     def bike_probabilities_for_weather(self, weather):
         id = weather["WeatherTypeID"]
         temperature = weather["TemperatureInKelvin"] - 273.15
@@ -100,24 +118,29 @@ class DataGenerator:
         :param dest_station: The station the person wants to travel to
         :return: probabilities for walking, biking, renting a car or taking other public transport
         """
-        weather = weatherApi.currentWeatherData()
+        #weather = weatherApi.currentWeatherData()
+        weather = self.generate_weather()
         bike_prob = self.bike_probabilities_for_weather(weather)
         lat1, lon1 = self.mapper.stop_to_coordinates(start_station)
         bike_stations = self.mapper.bike_stations_in_range(lat1, lon1)
         lat2, lon2 = self.mapper.stop_to_coordinates(dest_station)
         dest_distance = self.mapper.get_distance(lat1, lon1, lat2, lon2)
         foot_prob = self.get_foot_prob(weather, dest_distance)
-
-        near_bus_stations = self.mapper.bus_stations_in_range(lat1,
-                                                              lon1)  # TODO: schauen ob aktuelle position bei near dabei ist
+        near_bus_stations = self.mapper.bus_stations_in_range(lat1, lon1)
         possible_dest_stations = self.mapper.bus_stations_in_range(lat2, lon2)
         alt_pt = []
+        disrupted_routes = []
         for route in self.routes["stations"].values:
             for i, station1 in enumerate(route):
+                if station1 == start_station and len(route) > (i+1) and route[i+1] == dest_station:
+                    disrupted_routes.append(route)
+                    break
                 if any(station1 == origin[0] for origin in near_bus_stations):
                     for z in range(i, len(route)):
                         if any(route[z] == dest[0] for dest in possible_dest_stations):
                             alt_pt.append(route)
+        if alt_pt != []:
+            a = 0 #TODO
 
     def generate_modal_split(self, start, dest):
         following_stations = self.get_stations_on_route(start, dest)
@@ -145,7 +168,7 @@ class DataGenerator:
         print(self.routes_probs)
 
     def get_probabilities_for_route(self, start, last_stop):
-
+        pass
 
     def get_stations_on_route(self, start, dest):
         return []
