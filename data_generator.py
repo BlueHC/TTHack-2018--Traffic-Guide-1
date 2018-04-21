@@ -1,6 +1,7 @@
 import pandas as pd
 import weatherApi
 import numpy as np
+import scipy.stats as sp
 from route_coordinate_mapping import HVVCoordinateMapper
 from routing import load_routes
 
@@ -18,8 +19,9 @@ class DataGenerator:
     def __init__(self):
         self.mapper = HVVCoordinateMapper()
         self.routes = load_routes()
+        self.routes_probs = []
         self.sbahn_routes = []
-        #self._load_s_bahn_routes()
+        # self._load_s_bahn_routes()
         pass
 
     
@@ -78,6 +80,7 @@ class DataGenerator:
                 self.sbahn_routes.append(current_route)
                 current_route = [row["Zugnr"]]
                 current_route.append((row["Station"], row["Einsteiger"], row["Aussteiger"]))
+        self.sbahn_routes = np.asarray(self.sbahn_routes)
         print('Finished loading S-Bahn Routes')
 
     def probable_destination(self, start_station, dest_station):
@@ -96,7 +99,8 @@ class DataGenerator:
                             if stops_to_passengers[station] is None:
                                 stops_to_passengers[station] = int(float(exit.replace(",", ".")))
                             else:
-                                stops_to_passengers[station] = stops_to_passengers[station] + int(float(exit.replace(",", ".")))
+                                stops_to_passengers[station] = stops_to_passengers[station] + int(
+                                    float(exit.replace(",", ".")))
                         except KeyError:
                             stops_to_passengers[station] = int(float(exit.replace(",", ".")))
                     elif station == start_station:
@@ -105,7 +109,7 @@ class DataGenerator:
         total_count = 0
         for c in count_list:
             total_count += c[1]
-        return [(station, count/total_count) for (station, count) in count_list]
+        return [(station, count / total_count) for (station, count) in count_list]
 
     def filter_disrupted_routes(self, station1, station2):
         """
@@ -138,7 +142,6 @@ class DataGenerator:
         lat2, lon2 = self.mapper.stop_to_coordinates(dest_station)
         dest_distance = self.mapper.get_distance(lat1, lon1, lat2, lon2)
         foot_prob = self.get_foot_prob(weather, dest_distance)
-
         near_bus_stations = self.mapper.bus_stations_in_range(lat1, lon1)
         possible_dest_stations = self.mapper.bus_stations_in_range(lat2, lon2)
         alt_pt = []
@@ -150,15 +153,34 @@ class DataGenerator:
                             alt_pt.append(route)
         if alt_pt != []:
             print("Alternative found!")
-            
 
     def generate_modal_split(self, start, dest):
         following_stations = self.get_stations_on_route(start, dest)
-        base_pt=0.25
-        base_bike=0.2
-        base_car=0.45
-        base_foot=0.1
+        base_pt = 0.25
+        base_bike = 0.2
+        base_car = 0.45
+        base_foot = 0.1
 
+    def combine_sbahn_into_normal_routes(self):
+        pass
+
+    def generate_dummy_usage(self):
+        for j, route in enumerate(self.routes["stations"]):
+            route_prob = []
+            total_prob = 0
+            for i, stop in enumerate(route):
+                prob = 1 - (abs(i / len(route) - 0.5))  # approximate distribution of popularity of stations
+                total_prob += prob
+                route_prob.append((stop, prob))
+            for i, (stop, prob) in enumerate(route_prob):
+                # normalize probability, so that it's actually a probability
+                route_prob[i] = (stop, prob / total_prob)
+            self.routes_probs.append((route_prob, self.routes["id"][j]))
+        self.routes_probs = pd.DataFrame(self.routes_probs)
+        print(self.routes_probs)
+
+    def get_probabilities_for_route(self, start, last_stop):
+        pass
 
     def get_stations_on_route(self, start, dest):
         return []
@@ -169,16 +191,22 @@ class DataGenerator:
     def dummy_sub_data(self):
         pass
 
+
 def _test_routing():
     gen = DataGenerator()
     gen.filter_disrupted_routes("Hamburg Hbf", "Jungfernstieg")
     gen.generate_features_for_dest("Hamburg Hbf", "Jungfernstieg")
+    gen.combine_sbahn_into_normal_routes()
+    # print(gen.routes)
+    gen.generate_dummy_usage()
+
 
 def _test_probable_destination():
     gen = DataGenerator()
     ret = gen.probable_destination("Aumühle", "Elbgaustraße")
     print(ret)
 
+
 if __name__ == "__main__":
     _test_routing()
-    #_test_probable_destination()
+    # _test_probable_destination()
