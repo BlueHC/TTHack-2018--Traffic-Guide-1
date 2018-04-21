@@ -56,7 +56,9 @@ class HVVCoordinateMapper:
 
     def bus_stations_in_range(self, lat_start, lon_start, range=0.005):
         stations = []
-        for name, lat, lon in zip(self.df["stop_name"], self.df["stop_lat"], self.df["stop_lon"]):
+        for name, index in self.stop_to_index.items():
+            lat = self.index_to_lat[index]
+            lon = self.index_to_lon[index]
             dist = self.get_distance(lat_start, lon_start, lat, lon)
             if dist < range:
                 stations.append((name, dist))
