@@ -71,14 +71,14 @@ class HVVCoordinateMapper:
     def cars_in_range(self, lat_start, lon_start, range=0.005):
         nearby_cars = []
         for car in sharingMobilityAroundLocation(lat_start, lon_start):
-            dist = self.get_distance(lat_start, lon_start, car[0], car[1])
+            dist = self.get_distance(lat_start, lon_start, float(car[0]), float(car[1]))
             if dist <= range:
-                nearby_cars.append((lat, lon, dist))
+                nearby_cars.append((float(car[0]), float(car[1]), dist))
         return nearby_cars
 
     def get_bike_capacity(self, lat, lon):
         bike_stations = self.bike_stations_in_range(lat, lon)
-        return sum([get_station_cap(*s[:2]) for s in bike_stations])
+        #return sum([get_station_cap(*s[:2]) for s in bike_stations)
     
     def get_car_capacity(self, lat, lon):
         return
@@ -117,7 +117,7 @@ class HVVCoordinateMapper:
                     "opvn_actual": min(opvn_capacity, abs_dist["opvn"]),
                     "foot_actual": foot_capacity}
                     
-        return (abs_distribution, capped_distribution)
+        #return (abs_distribution, capped_distribution)
 
 
 if __name__ == "__main__":
