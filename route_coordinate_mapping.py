@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import gpxpy
 import math
+from sharingMobilityAPI import sharingMobilityAroundLocation
 
 
 class HVVCoordinateMapper:
@@ -67,9 +68,17 @@ class HVVCoordinateMapper:
                 stations.append((name, dist))
         return stations
 
+    def cars_in_range(self, lat_start, lon_start, range=0.005):
+        nearby_cars = []
+        for car in sharingMobilityAroundLocation(lat_start, lon_start):
+            dist = self.get_distance(lat_start, lon_start, car[0], car[1])
+            if dist <= range:
+                nearby_cars.append((lat, lon, dist))
+        return nearby_cars
+
     def get_bike_capacity(self, lat, lon):
-        bike_stations = bike_stations_in_range(lat, lon)
-        return sum([get_station_cap(*s[:2]) for s in bike_stations)
+        bike_stations = self.bike_stations_in_range(lat, lon)
+        return sum([get_station_cap(*s[:2]) for s in bike_stations])
     
     def get_car_capacity(self, lat, lon):
         return
@@ -89,7 +98,7 @@ class HVVCoordinateMapper:
         """
         distribution = predictor.predict(scenarios, weights)
         abs_distribution = distribution * num_passengers
-        actual_distribution = get_actual_distribution(abs_distribution, lat, lon)
+        actual_distribution = self.get_actual_distribution(abs_distribution, lat, lon)
         return actual_distribution
     
     def get_actual_distribution(self, abs_dist, lat, lon):
@@ -98,9 +107,9 @@ class HVVCoordinateMapper:
         Also returns the intended distribution for calculating the passengers
         that need to be transported by different means.
         """
-        bike_capacity = get_bike_capacity(lat, lon)
-        car_capacity = get_car_capacity(lat, lon)
-        opvn_capacity = get_opvn_capacity(lat, lon)
+        bike_capacity = self.get_bike_capacity(lat, lon)
+        car_capacity = self.get_car_capacity(lat, lon)
+        opvn_capacity = self.get_opvn_capacity(lat, lon)
         foot_capacity = abs_dist["foot"]
         
         deficits = {"bike_actual": min(bike_capacity, abs_dist["bike"]),

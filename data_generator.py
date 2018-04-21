@@ -21,6 +21,7 @@ class DataGenerator:
         self.routes = load_routes()
         self.routes_probs = []
         self.sbahn_routes = []
+        self.unaffected_routes = []
         # self._load_s_bahn_routes()
         self.generate_dummy_usage()
         self.time_factor = {
@@ -69,7 +70,7 @@ class DataGenerator:
         
         return {"WeatherTypeID":weather_id, "TemperatureInKelvin":temp}
         
-    def bike_probabilities_for_weather(self, weather):
+    def bike_factor_for_weather(self, weather):
         id = weather["WeatherTypeID"]
         temperature = weather["TemperatureInKelvin"] - 273.15
         # see https://openweathermap.org/weather-conditions
@@ -92,9 +93,9 @@ class DataGenerator:
             bike_probability = bike_probability * 1.2
         return bike_probability
 
-    def get_foot_prob(self, weather, distance):
+    def get_foot_factor(self, weather, distance):
         base_prob = 1 - (distance * 200)
-        return base_prob * self.bike_probabilities_for_weather(weather)
+        return base_prob * self.bike_factor_for_weather(weather)
 
     def _load_s_bahn_routes(self):
         print('Loading S-Bahn Routes')
@@ -148,11 +149,12 @@ class DataGenerator:
         for index, route_with_id in self.routes.iterrows():
             route = route_with_id["stations"]
             for i, station in enumerate(route):
-                if station1 == station and len(route) > (i+1) and station2 == route[i+1] \
-                    or station2 == station and len(route) > (i+1) and station1 == route[i+1]:
+                if station1 == station and len(route) > (i+1) and station2 == route[i+1] or \
+                                                station2 == station and len(route) > (i+1) and station1 == route[i+1]:
                     affected_routes.append(index)
                     break
-        self.unaffected_routes = self.routes.copy().drop(affected_routes)                 
+        self.unaffected_routes = self.routes.copy().drop(affected_routes)
+        return affected_routes
 
     def generate_features_for_dest(self, start_station, dest_station, time):
         """
@@ -163,15 +165,15 @@ class DataGenerator:
         """
         #weather = weatherApi.currentWeatherData()
         weather = self.generate_weather()
-        bike_prob = self.bike_probabilities_for_weather(weather)
+        bike_fact = self.bike_factor_for_weather(weather)
         lat1, lon1 = self.mapper.stop_to_coordinates(start_station)
         bike_stations = self.mapper.bike_stations_in_range(lat1, lon1)
         lat2, lon2 = self.mapper.stop_to_coordinates(dest_station)
         dest_distance = self.mapper.get_distance(lat1, lon1, lat2, lon2)
-        foot_prob = self.get_foot_prob(weather, dest_distance)
+        foot_fact = self.get_foot_factor(weather, dest_distance)
         near_bus_stations = self.mapper.bus_stations_in_range(lat1, lon1)
         possible_dest_stations = self.mapper.bus_stations_in_range(lat2, lon2)
-        alt_pt = []
+        self.alt_pt = []
         for index, route_with_id in self.unaffected_routes.iterrows():
             route = route_with_id["stations"]
             route_id = route_with_id["id"]
@@ -179,20 +181,32 @@ class DataGenerator:
                 if any(station1 == origin[0] for origin in near_bus_stations):
                     for z in range(i, len(route)):
                         if any(route[z] == dest[0] for dest in possible_dest_stations):
-                            alt_pt.append((route_id, station1, self.get_used_capacity(route_id, station1, time)))
-        if alt_pt != []:
-            print("Alternative found!")
-        print(alt_pt)
+                            self.alt_pt.append((route_id, station1, self.get_used_capacity(route_id, station1, time)))
 
-    def generate_modal_split(self, start, dest):
-        following_stations = self.get_stations_on_route(start, dest)
-        base_pt = 0.25
+        near_cars = self.mapper.cars_in_range(lat1, lon1)
+        cars_fact = len(near_cars) / 10
+        pt_fact = 0.5
+        if self.alt_pt == []:
+            pt_fact = 0
+
+
+    def modal_split(self, foot_fact, bike_fact, car_fact, pt_fact):
+        """
+        Returns probabilities for 4 travel modalities based on a static modal split and a given condition-dependent
+        collection of factors for each modality
+        """
+        print("Factors: %f, %f, %f, %f" % (foot_fact, bike_fact, car_fact, pt_fact))
         base_bike = 0.2
         base_car = 0.45
         base_foot = 0.1
+        base_pt = 0.25
+        foot = base_foot * foot_fact
+        bike = base_bike * bike_fact
+        car = base_car * car_fact
+        pt = base_pt * pt_fact
+        normal_factor = foot + bike + car + pt
+        return foot / normal_factor, bike / normal_factor, car / normal_factor, pt / normal_factor
 
-    def combine_sbahn_into_normal_routes(self):
-        pass
 
     def get_used_capacity(self, route_id, station, time):
         route_capacities = self.routes_probs.loc[self.routes_probs[1] == route_id]
@@ -214,18 +228,6 @@ class DataGenerator:
                 route_prob[i] = (stop, prob / total_prob)
             self.routes_probs.append((route_prob, self.routes["id"][j]))
         self.routes_probs = pd.DataFrame(self.routes_probs)
-
-    def get_probabilities_for_route(self, start, last_stop):
-        pass
-
-    def get_stations_on_route(self, start, dest):
-        return []
-
-    def dummy_bus_data(self):
-        pass
-
-    def dummy_sub_data(self):
-        pass
 
 
 def _test_routing():
