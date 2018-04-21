@@ -57,7 +57,7 @@ class HVVCoordinateMapper:
             if dist <= range:
                 bike_stations.append((lat, lon, dist))
         return bike_stations
-
+    
     def bus_stations_in_range(self, lat_start, lon_start, range=0.005):
         stations = []
         for name, index in self.stop_to_index.items():
@@ -66,6 +66,49 @@ class HVVCoordinateMapper:
             if dist <= range:
                 stations.append((name, dist))
         return stations
+
+    def get_bike_capacity(self, lat, lon):
+        bike_stations = bike_stations_in_range(lat, lon)
+        return sum([get_station_cap(*s[:2]) for s in bike_stations)
+    
+    def get_car_capacity(self, lat, lon):
+        return
+    
+    def get_opvn_capacity(self, lat, lon):
+        return
+    
+    def get_passenger_distribution(self, lat, lon, num_passengers, predictor, 
+                                    scenarios, weights):
+        """Wichtig.
+        
+        lat, lon - wo die Strecke ausfällt
+        num_passengers - absolute Anzahl an Passagieren, die Strecke genutzt hätte
+        predictor - Predictor-Objekt, welches das Modell geladen hat
+        scenarios - model inputs (einer für jede mögliche Zielstation)
+        weights - Gewichte für jede Zielstation (Wahrscheinlichkeiten)
+        """
+        distribution = predictor.predict(scenarios, weights)
+        abs_distribution = distribution * num_passengers
+        actual_distribution = get_actual_distribution(abs_distribution, lat, lon)
+        return actual_distribution
+    
+    def get_actual_distribution(self, abs_dist, lat, lon):
+        """Caps the absolute distribution at the max capacities
+            
+        Also returns the intended distribution for calculating the passengers
+        that need to be transported by different means.
+        """
+        bike_capacity = get_bike_capacity(lat, lon)
+        car_capacity = get_car_capacity(lat, lon)
+        opvn_capacity = get_opvn_capacity(lat, lon)
+        foot_capacity = abs_dist["foot"]
+        
+        deficits = {"bike_actual": min(bike_capacity, abs_dist["bike"]),
+                    "car_actual": min(car_capacity, abs_dist["car"]),
+                    "opvn_actual": min(opvn_capacity, abs_dist["opvn"]),
+                    "foot_actual": foot_capacity}
+                    
+        return (abs_distribution, capped_distribution)
 
 
 if __name__ == "__main__":
