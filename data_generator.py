@@ -47,7 +47,7 @@ class DataGenerator:
     def probable_destination(self):
         df = pd.read_csv(filepath_or_buffer="data/Hackathon.csv", delimiter=";")
 
-    def generate_features_for_dest(self, start_station, dest_station):
+    def generate_features_for_dest(self, start_station, dest_station, bus_routes):
         """
         Generates probabilities for a person wanting to travel to dest_station
         :param start_station: The station where the person is stranded
@@ -61,8 +61,17 @@ class DataGenerator:
         lat2, lon2 = self.mapper.stop_to_coordinates(dest_station)
         dest_distance = self.mapper.get_distance(lat1, lon1, lat2, lon2)
         foot_prob = self.get_foot_prob(weather, dest_distance)
+
         near_bus_stations = self.mapper.bus_stations_in_range(lat1, lon1)
         possible_dest_stations = self.mapper.bus_stations_in_range(lat2, lon2)
+        alt_pt = []
+        for route in bus_routes:
+            for i, station1 in enumerate(route):
+                if any(station1 == origin[0] for origin in near_bus_stations):
+                    for z in range(i, len(route)):
+                        if any(route[z] == dest[0] for dest in possible_dest_stations):
+                            alt_pt.append(route) #TODO anpassen an route datenstruktur
+        print(alt_pt)
 
     def generate_modal_split(self, start, dest):
         following_stations = self.get_stations_on_route(start, dest)
@@ -79,3 +88,5 @@ class DataGenerator:
 
 if __name__ == "__main__":
     gen = DataGenerator()
+    routes = [["Hamburg Hbf", "Bornkampsweg", "Jungfernstieg"], ["Jungfernstieg", "Bornkampsweg", "Hamburg Hbf"], ["Hamburg Hbf", "Bornkampsweg"]]
+    gen.generate_features_for_dest("Hamburg Hbf", "Jungfernstieg", routes)
