@@ -162,6 +162,8 @@ class DataGenerator:
         :param dest_station: The station the person wants to travel to
         :return: probabilities for walking, biking, renting a car or taking other public transport
         """
+        if start_station == dest_station:
+            print("START STATION EQUALS DESTINATION")
         # weather = weatherApi.currentWeatherData()
         weather = self.generate_weather()
         bike_fact = self.bike_factor_for_weather(weather)
@@ -204,7 +206,10 @@ class DataGenerator:
         car = base_car * car_fact
         pt = base_pt * pt_fact
         normal_factor = foot + bike + car + pt
-        return foot / normal_factor, bike / normal_factor, car / normal_factor, pt / normal_factor
+        if normal_factor > 0:
+            return foot / normal_factor, bike / normal_factor, car / normal_factor, pt / normal_factor
+        else:
+            return 0, 0, 0, 0
 
     def get_used_capacity(self, route_id, station, time):
         route_capacities = self.routes_probs.loc[self.routes_probs[1] == route_id]

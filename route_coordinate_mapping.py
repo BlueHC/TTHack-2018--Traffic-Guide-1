@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import gpxpy
 import math
+import urllib.error
 from sharingMobilityAPI import sharingMobilityAroundLocation
 
 
@@ -58,7 +59,7 @@ class HVVCoordinateMapper:
             if dist <= range:
                 bike_stations.append((lat, lon, dist))
         return bike_stations
-    
+
     def bus_stations_in_range(self, lat_start, lon_start, range=0.007):
         stations = []
         for name, index in self.stop_to_index.items():
@@ -70,24 +71,27 @@ class HVVCoordinateMapper:
 
     def cars_in_range(self, lat_start, lon_start, range=0.005):
         nearby_cars = []
-        for car in sharingMobilityAroundLocation(lat_start, lon_start):
-            dist = self.get_distance(lat_start, lon_start, float(car[0]), float(car[1]))
-            if dist <= range:
-                nearby_cars.append((float(car[0]), float(car[1]), dist))
+        try:
+            for car in sharingMobilityAroundLocation(lat_start, lon_start):
+                dist = self.get_distance(lat_start, lon_start, float(car[0]), float(car[1]))
+                if dist <= range:
+                    nearby_cars.append((float(car[0]), float(car[1]), dist))
+        except urllib.error.HTTPError:
+            return []
         return nearby_cars
 
     def get_bike_capacity(self, lat, lon):
         bike_stations = self.bike_stations_in_range(lat, lon)
-        #return sum([get_station_cap(*s[:2]) for s in bike_stations)
-    
+        # return sum([get_station_cap(*s[:2]) for s in bike_stations)
+
     def get_car_capacity(self, lat, lon):
         return
-    
+
     def get_opvn_capacity(self, lat, lon):
         return
-    
-    def get_passenger_distribution(self, lat, lon, num_passengers, predictor, 
-                                    scenarios, weights):
+
+    def get_passenger_distribution(self, lat, lon, num_passengers, predictor,
+                                   scenarios, weights):
         """Wichtig.
         
         lat, lon - wo die Strecke ausfällt
@@ -100,7 +104,7 @@ class HVVCoordinateMapper:
         abs_distribution = distribution * num_passengers
         actual_distribution = self.get_actual_distribution(abs_distribution, lat, lon)
         return actual_distribution
-    
+
     def get_actual_distribution(self, abs_dist, lat, lon):
         """Caps the absolute distribution at the max capacities
             
@@ -111,13 +115,13 @@ class HVVCoordinateMapper:
         car_capacity = self.get_car_capacity(lat, lon)
         opvn_capacity = self.get_opvn_capacity(lat, lon)
         foot_capacity = abs_dist["foot"]
-        
+
         deficits = {"bike_actual": min(bike_capacity, abs_dist["bike"]),
                     "car_actual": min(car_capacity, abs_dist["car"]),
                     "opvn_actual": min(opvn_capacity, abs_dist["opvn"]),
                     "foot_actual": foot_capacity}
-                    
-        #return (abs_distribution, capped_distribution)
+
+        # return (abs_distribution, capped_distribution)
 
 
 if __name__ == "__main__":
