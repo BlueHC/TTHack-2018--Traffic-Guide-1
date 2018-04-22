@@ -187,6 +187,16 @@ class DataGenerator:
         pt_fact = 0.5
         if self.alt_pt == []:
             pt_fact = 0
+        else:
+            for alt in self.alt_pt:
+                lat_alt, lon_alt = self.mapper.stop_to_coordinates(alt[1])
+                distance = self.mapper.get_distance(lat1, lon1, lat_alt, lon_alt)
+                if distance == 0:
+                    pt_fact = 0.9      
+                    break    
+                elif distance < 0.0035:
+                    pt_fact = 0.7
+        
         return self.modal_split(foot_fact, bike_fact, car_fact, pt_fact)
 
     def modal_split(self, foot_fact, bike_fact, car_fact, pt_fact):
@@ -231,7 +241,6 @@ class DataGenerator:
 def _test_routing():
     gen = DataGenerator()
     gen.filter_disrupted_routes("Hamburg Hbf", "Jungfernstieg")
-    gen.generate_dummy_usage()
     gen.generate_features_for_dest("Hamburg Hbf", "Jungfernstieg", 17)
 
 
