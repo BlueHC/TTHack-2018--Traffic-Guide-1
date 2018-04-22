@@ -97,7 +97,7 @@ class DataGenerator:
         :param distance: euclidean distance to estimated destination
         :return: A factor for determining the popularity of bikes (higher -> more people ride bikes)
         """
-        car_fact = len(num_near_cars) / 5
+        car_fact = num_near_cars / 5
         car_fact = car_fact * (1 - self.bike_factor_for_weather(weather))  # inverse correlation with good weather
         car_fact = car_fact * (distance / 10)  # proportional correlation with distance (1.0 distance ~= 100 km)
         return car_fact
