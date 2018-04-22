@@ -25,7 +25,12 @@ Als besonderes Feature haben wir ein neuronales Netz gebaut, dass darauf trainie
 
 ## Namen und Kontaktdaten der Gruppenmitglieder:
 Hauke Diers, hauke.diers@outlook.com
+
 Marlon Flügge, marlon.fluegge@web.de
+
 Merlin Burri, merlin.burri@gmail.com
+
 Tilman Ihrig, tilmangm@gmail.com
+
 Andreas Thinius, cycleguide@web.de
+
