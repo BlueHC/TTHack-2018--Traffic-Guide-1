@@ -77,12 +77,13 @@ def weatherFrontEnd():
         del resultList[3:]
 
     resultList.insert(0,resultToday)
-    resultJson = json.dumps(resultList)
+    resultToJson = {'ListOfDays': resultList}
+    resultJson = json.dumps(resultToJson)
     
     # outout to file. Not sure if it works correctly.
     # with open('weatherFrontEndJSON.txt', 'w') as outfile:
     #    json.dump(resultJson, outfile)
-
+    
     return resultJson
 
 print(weatherFrontEnd())
