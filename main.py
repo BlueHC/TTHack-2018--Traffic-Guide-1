@@ -45,11 +45,18 @@ class Main:
                         got_first_stop = True
         return (features, np.array([walkers / norm_fact, bikers / norm_fact, car_drivers / norm_fact, pt_users / norm_fact]))
 
-    def return_json(self, json_text):
+    def return_json(self, json_text, time=12):
         begin = ""
         end = ""
         (features, labels) = self.add_disruption(begin, end)
-        stranded_capacity = self.generator.get_used_capacity()
+        for index, route_with_id in self.generator.routes.iterrows():
+            route = route_with_id["stations"]
+            route_id = route_with_id["id"]
+            for i, station1 in enumerate(route):
+                if any(station1 == origin[0] for origin in near_bus_stations):
+                    for z in range(i, len(route)):
+                        if any(route[z] == dest[0] for dest in possible_dest_stations):    
+                            stranded_capacity = self.generator.get_used_capacity(routeid, station1, time)
         walkers = labels[0] * stranded_capacity
         bikers = labels[1] * stranded_capacity
         car_drivers = labels[2] * stranded_capacity
