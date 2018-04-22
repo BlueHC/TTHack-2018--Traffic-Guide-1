@@ -32,7 +32,7 @@ class Main:
                         station_prob_mapping = self.generator.generate_prob_mapping(stop, route[0], affected_routes[index])
                         stations_to_target = reversed(route[:i])
                         for station in stations_to_target:
-                            walking_prob, bike_prob, car_prob, pt_prob = self.generator.generate_features_for_dest(stop, station, time, weather=weather)
+                            features, (walking_prob, bike_prob, car_prob, pt_prob) = self.generator.generate_features_for_dest(stop, station, time, weather=weather)
                             walkers += walking_prob * station_prob_mapping[station]
                             bikers += bike_prob * station_prob_mapping[station]
                             car_drivers += car_prob * station_prob_mapping[station]
