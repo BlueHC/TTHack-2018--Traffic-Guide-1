@@ -1,5 +1,6 @@
 import numpy as np
 import json
+import io
 from data_generator import DataGenerator
 
 
@@ -10,7 +11,7 @@ class Main:
 
     def add_disruption(self, begin, end, time=12):
         features_printed=False
-        weather = self.generator.generate_weather()
+        weather = self.generator.generate_good_weather()
         affected_routes = self.generator.filter_disrupted_routes(begin, end)
         walkers = 0
         bikers = 0
@@ -83,6 +84,7 @@ def pack_to_dict(strand, walk, pt, pt_use, bike, bike_use, car, car_use):
     dict["actually_ride_bike"] = bike_use
     dict["want_to_drive_car"] = car
     dict["actually_drive_car"] = car_use
+    print(dict)
     return dict
 
 
@@ -105,5 +107,5 @@ if __name__ == "__main__":
     strand, walk, pt, pt_use, bike, bike_use, car, car_use = main.generate_plotly_features("Diebsteich", "Holstenstraße")
     features["Diebsteich"] = pack_to_dict(strand, walk, pt, pt_use, bike, bike_use, car, car_use)
     print(features)
-    with open('data/plots.txt', 'w') as f:
+    with io.open('data/plots.json', 'w', encoding='utf-8') as f:
         json.dump(features, f)

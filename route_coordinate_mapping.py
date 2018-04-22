@@ -53,7 +53,7 @@ class HVVCoordinateMapper:
         dist = np.linalg.norm(start_vec - dest_vec)  # euclidean distance between start and destination coordinates
         return dist
 
-    def bike_stations_in_range(self, lat_start, lon_start, range=0.010):
+    def bike_stations_in_range(self, lat_start, lon_start, range=0.013):
         bike_stations = []
         for (lat, lon) in amountStadtRadAvailable().keys():
             dist = self.get_distance(lat_start, lon_start, lat, lon)
@@ -61,7 +61,7 @@ class HVVCoordinateMapper:
                 bike_stations.append((lat, lon, dist))
         return bike_stations
 
-    def bus_stations_in_range(self, lat_start, lon_start, range=0.008):
+    def bus_stations_in_range(self, lat_start, lon_start, range=0.011):
         stations = []
         for name, index in self.stop_to_index.items():
             (lat, lon) = self.index_to_lat_lon[index]
@@ -70,7 +70,7 @@ class HVVCoordinateMapper:
                 stations.append((name, dist))
         return stations
 
-    def cars_in_range(self, lat_start, lon_start, range=0.0065):
+    def cars_in_range(self, lat_start, lon_start, range=0.008):
         nearby_cars = []
         try:
             for car in sharingMobilityAroundLocation(lat_start, lon_start):

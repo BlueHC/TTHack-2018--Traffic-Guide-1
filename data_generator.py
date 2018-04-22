@@ -72,6 +72,9 @@ class DataGenerator:
 
     def generate_good_weather(self):
         weather_id = 800
+        temp = 22 + 273.15
+        return{"WeatherTypeID": weather_id, "TemperatureInKelvin": temp}
+
 
     def bike_factor_for_weather(self, weather):
         id = weather["WeatherTypeID"]
@@ -97,11 +100,11 @@ class DataGenerator:
         return bike_factor
 
     def get_bike_factor(self, weather, distance):
-        base_prob = max(0, 1 - (distance * 15))
+        base_prob = max(0, 1 - (distance * 15))  # 100 / 15 ~= 6.5 km max. distance
         return base_prob * self.bike_factor_for_weather(weather)
 
     def get_foot_factor(self, weather, distance):
-        base_prob = max(0, 1 - (distance * 50))
+        base_prob = max(0, 1 - (distance * 35))  # 100 / 35 ~= 3 km max. distance
         return base_prob * self.bike_factor_for_weather(weather)
 
     def _load_s_bahn_routes(self):
