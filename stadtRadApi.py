@@ -10,7 +10,7 @@ def amountStadtRadAvailable():
     payload = f.read().decode('utf-8')
     payloadjson = json.loads(payload)
 
-    result = []
+    resultMap = {}
 
     numberStations = len(payloadjson['marker'])
     amountBikesTotal = 0
@@ -18,12 +18,11 @@ def amountStadtRadAvailable():
         resultLat = payloadjson['marker'][i]['lat']
         resultLng = payloadjson['marker'][i]['lng']
         resultAmount = len(payloadjson['marker'][i]['hal2option']['bikelist'])
-        resultTuple = (resultLat, resultLng, resultAmount)
+        resultMap[(resultLat, resultLng)] = resultAmount
         amountBikesTotal += resultAmount
-        result.append(resultTuple)
 
     # Number of stations and bikes in total
     # print('Number of stations: ' + str(numberStations))
     # print('Number of bikes: ' + str(amountBikesTotal))
         
-    return result
+    return resultMap
