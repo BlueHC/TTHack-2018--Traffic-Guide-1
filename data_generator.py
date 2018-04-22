@@ -1,22 +1,12 @@
 import pandas as pd
 import weatherApi
 import numpy as np
-import scipy.stats as sp
 from route_coordinate_mapping import HVVCoordinateMapper
 from routing import load_routes
 import json
 
 
 class DataGenerator:
-    """
-    Features:
-    (static) modal split: Fahrrad, Fuß, Auto?
-    Anzahl Fahrradstationen in 1km?
-    Anzahl Bus-/Bahnstationen in der Nähe (Richtung?)
-    Destination Proximity(je näher -> mehr Fuß/Fahrrad)
-    Wetter (Temperatur, Niederschlagswahrscheinlichkeit)
-    """
-
     def __init__(self):
         self.mapper = HVVCoordinateMapper()
         self.routes = load_routes()
@@ -66,18 +56,19 @@ class DataGenerator:
         ],
             p=[0.05, 0.1, 0.1, 0.05, 0.1, 0.5, 0.1]
         )
-
         temp = np.random.randint(-2, 37) + 273.15
-
         return {"WeatherTypeID": weather_id, "TemperatureInKelvin": temp}
 
     def generate_good_weather(self):
         weather_id = 800
         temp = 22 + 273.15
-        return{"WeatherTypeID": weather_id, "TemperatureInKelvin": temp}
-
+        return {"WeatherTypeID": weather_id, "TemperatureInKelvin": temp}
 
     def bike_factor_for_weather(self, weather):
+        """
+        :param weather: a container for weather data (general, e.g. sunny and temperature)
+        :return: a factor corresponding positively with "good" weather
+        """
         id = weather["WeatherTypeID"]
         temperature = weather["TemperatureInKelvin"] - 273.15
         self.features[0] = id
@@ -100,6 +91,17 @@ class DataGenerator:
             bike_factor = bike_factor * 1.2
         return bike_factor
 
+    def get_car_factor(self, weather, distance, num_near_cars):
+        """
+        :param weather: weather container containing general weather conditions (e.g. cloudy) and temperature
+        :param distance: euclidean distance to estimated destination
+        :return: A factor for determining the popularity of bikes (higher -> more people ride bikes)
+        """
+        car_fact = num_near_cars / 5
+        car_fact = car_fact * (1 - self.bike_factor_for_weather(weather))  # inverse correlation with good weather
+        car_fact = car_fact * (distance / 10)  # proportional correlation with distance (1.0 distance ~= 100 km)
+        return car_fact
+
     def get_bike_factor(self, weather, distance):
         """
         :param weather: weather container containing general weather conditions (e.g. cloudy) and temperature
@@ -117,6 +119,25 @@ class DataGenerator:
         """
         base_prob = max(0, 1 - (distance * 35))  # 100 / 35 ~= 3 km max. distance
         return base_prob * self.bike_factor_for_weather(weather)
+
+    def get_public_transport_factor(self, lat_strand, lon_strand):
+        """
+        :param lat_strand: latitude where person is stranded
+        :param lon_strand: longitude where person is stranded
+        :return: a factor for determining the popularity of taking other public transportation
+        """
+        pt_fact = 0
+        if self.alt_pt != []:
+            pt_fact = 0.5
+            for alt in self.alt_pt:
+                lat_alt, lon_alt = self.mapper.stop_to_coordinates(alt[1])
+                distance = self.mapper.get_distance(lat_strand, lon_strand, lat_alt, lon_alt)
+                if distance == 0:
+                    pt_fact = 0.9
+                    break
+                elif distance < 0.0035:
+                    pt_fact = 0.7
+        return pt_fact
 
     def _load_s_bahn_routes(self):
         """
@@ -166,9 +187,9 @@ class DataGenerator:
 
     def filter_disrupted_routes(self, station1, station2):
         """
-        Filters out routes disrupted by the disruption between station1 and station2
-        :param station1: The first station between the disruption occured
-        :param station2: The second station between the disruption occured
+        Filters out routes affected by the disruption between station1 and station2
+        :param station1: The station 'behind' which the disruption occured
+        :param station2: The station 'before' which the disruption occured
         """
         affected_routes = []
         for index, route_with_id in self.routes.iterrows():
@@ -208,28 +229,15 @@ class DataGenerator:
                     for z in range(i, len(route)):
                         if any(route[z] == dest[0] for dest in possible_dest_stations):
                             self.alt_pt.append((route_id, station1, self.get_used_capacity(route_id, station1, time)))
-
         near_cars = self.mapper.cars_in_range(lat1, lon1)
-        car_fact = len(near_cars) / 20
-        pt_fact = 0.5
-        if self.alt_pt == []:
-            pt_fact = 0
-        else:
-            for alt in self.alt_pt:
-                lat_alt, lon_alt = self.mapper.stop_to_coordinates(alt[1])
-                distance = self.mapper.get_distance(lat1, lon1, lat_alt, lon_alt)
-                if distance == 0:
-                    pt_fact = 0.9      
-                    break    
-                elif distance < 0.0035:
-                    pt_fact = 0.7
-        
-        
+        car_fact = self.get_car_factor(weather, dest_distance, len(near_cars))
+        pt_fact = self.get_public_transport_factor(lat1, lon1)
+
         ###
         self.generate_features(near_bus_stations, bike_stations, near_cars)
-        dicts = {}        
+        dicts = {}
         routes_dict = {}
-        for i, alt_route in enumerate(self.alt_pt): 
+        for i, alt_route in enumerate(self.alt_pt):
             r_dict = {}
             r_dict["Haltestelle"] = alt_route[1]
             lat, lon = self.mapper.stop_to_coordinates(alt_route[1])
@@ -244,9 +252,9 @@ class DataGenerator:
         sm_dict["AnzahlSharingMobility"] = self.mapper.get_car_capacity(lat1, lon1)
         dicts["SharingMobility"] = sm_dict
         with open('data/misc.txt', 'w', encoding='UTF-8') as f:
-            json.dump(dicts, f, ensure_ascii=False)       
-        
-        ###
+            json.dump(dicts, f, ensure_ascii=False)
+
+            ###
         self.generate_features(near_bus_stations, bike_stations, near_cars)
         return self.modal_split(foot_fact, bike_fact, car_fact, pt_fact)
 
@@ -254,7 +262,7 @@ class DataGenerator:
         self.features[6] = self.get_closest(near_bus_stations, 1)
         self.features[7] = self.get_closest(bike_stations, 2)
         self.features[8] = self.get_closest(near_cars, 2)
-        
+
     def get_closest(self, locations_with_distances, dist_index):
         if locations_with_distances == []:
             return 5
@@ -283,7 +291,8 @@ class DataGenerator:
         pt = base_pt * pt_fact
         normal_factor = foot + bike + car + pt
         if normal_factor > 0:
-            return (self.features, (foot / normal_factor, bike / normal_factor, car / normal_factor, pt / normal_factor))
+            return (
+            self.features, (foot / normal_factor, bike / normal_factor, car / normal_factor, pt / normal_factor))
         else:
             return (self.features, (0, 0, 0, 0))
 
@@ -291,7 +300,7 @@ class DataGenerator:
         route_capacities = self.routes_probs.loc[self.routes_probs[1] == route_id]
         for stop in route_capacities[0].values[0]:
             if stop[0] == station:
-                capacity = (stop[1] * 100) ** 2.32 / 100 
+                capacity = (stop[1] * 100) ** 2.32 / 100
                 return min(0.95, self.time_factor[time] * capacity)
 
     def generate_dummy_usage(self):
@@ -316,7 +325,7 @@ class DataGenerator:
             if station == start:
                 if end != route[0][0]:
                     print("not reversed")
-                    partial_route = route[i+1:]
+                    partial_route = route[i + 1:]
                 else:
                     print("reversed")
                     partial_route = list(reversed(route[:i]))
@@ -326,8 +335,6 @@ class DataGenerator:
         for (station, prob) in partial_route:
             prob_mapping[station] = prob / total_prob
         return prob_mapping
-
-
 
 
 def _test_routing():
