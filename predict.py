@@ -10,6 +10,7 @@ class Predictor():
         self.model.eval()
     
     def predict(self, scenarios, weights):
+        # deprecated
         distribution = np.array([0.0]*4)
         for scenario, weight in zip(scenarios, weights):
             scenario = Variable(torch.from_numpy(scenario).float())
@@ -22,7 +23,7 @@ class Predictor():
     def predict2(self, disruption):
         disruption = Variable(torch.from_numpy(disruption).float())
         output = self.model(disruption).data.numpy()
-        return output /= sum(output)
+        return output  # /= sum(output) (normalization?)
             
 if __name__ == "__main__":
     model_path = "learning-rate=0.001_weight-decay=1e-05.model"
