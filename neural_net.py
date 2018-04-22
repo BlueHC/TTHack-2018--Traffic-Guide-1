@@ -14,9 +14,9 @@ class HVVNet(nn.Module):
     def __init__(self, input_size, output_size):
         super(HVVNet, self).__init__()
         self.f = nn.Sequential(
-            nn.Linear(input_size, 8), nn.ReLU(), nn.Dropout(0.3),
-            nn.Linear(8, 8), nn.ReLU(), nn.Dropout(0.3),
-            nn.Linear(8, output_size), nn.ReLU())
+            nn.Linear(input_size, 10), nn.ReLU(), nn.Dropout(0.2),
+            nn.Linear(10, 10), nn.ReLU(), nn.Dropout(0.2),
+            nn.Linear(10, output_size), nn.Sigmoid())
     
     def forward(self, x):
         return self.f(x)
@@ -103,8 +103,19 @@ def binarize_weather_id(samples):
     return np.concatenate((np.delete(samples, idx, axis=1), np.array(binaries)), axis=1)
     
 if __name__ == "__main__":
-    m = Main()
-    pairs = generate_stop_pairs(2)
+    #m = Main()
+    
+    df = pd.read_csv("data/export_test_105920.csv")
+    #df2 = pd.read_csv("data/export_test_538371.csv")
+    #df_final = pd.concat((df, df2))
+    raw_data = df.values
+    features = raw_data[:, :8]
+    outputs = raw_data[:, 8:]
+    
+    
+    """
+    
+    pairs = generate_stop_pairs(8)
     
     ins = []
     outs = []
@@ -118,15 +129,17 @@ if __name__ == "__main__":
     ins = np.array(ins)
     outs = np.array(outs)
     print("ins before", ins)
-    ins = binarize_weather_id(ins)
+
     print("ins after", ins)
     
     print("outs", outs)
-    
+    """
+    ins = binarize_weather_id(features)
+    outs = outputs
     data = (ins, outs)
     print("data", data)
     split = int(len(data) * 0.8)
-    split = 1
+    split = 5
 
     training_data = HVVData((data[0][:split], data[1][:split]))
     validation_data = HVVData((data[0][split:], data[1][split:]))
@@ -135,22 +148,24 @@ if __name__ == "__main__":
     output_size = len(data[1][0])
     
     model = HVVNet(input_size, output_size)
-    batch_size = 1
-    epochs = 100
+    batch_size = 2
+    epochs = 250
     wd = 0.00001
     lr = 0.0001
     criterion = nn.MSELoss()
     optimizer = Adam(model.parameters(), lr=lr, weight_decay=wd)
     
     train_loader = DataLoader(training_data, shuffle=True, batch_size=batch_size)
-    test_loader = DataLoader(validation_data, batch_size=len(validation_data))
+    train_val_loader = DataLoader(training_data, shuffle=False, batch_size=len(training_data[0]))
+    test_loader = DataLoader(validation_data, batch_size=len(validation_data[0]))
     
     training_losses = []
     validation_losses = []
     for epoch in range(1, epochs):
         print('--- Epoch', epoch, "---")
         
-        training_loss = train(model, train_loader, optimizer, criterion)
+        _ = train(model, train_loader, optimizer, criterion)
+        training_loss = validate(model, train_val_loader, criterion)
         training_losses.append(training_loss)
         print('Training Loss: {:.6f}'.format(training_loss))
                                                 
@@ -166,7 +181,8 @@ if __name__ == "__main__":
             'size'   : 24}
 
     plt.rc('font', **font)
-    plt.title("Learning Rate {} | Weight Decay {}".format(lr, wd))
+    #plt.title("Learning Rate {} | Weight Decay {}".format(lr, wd))
+    plt.title("Neural Network Prediction Error Over Time")
     plt.plot(training_losses, "b", marker="o", linestyle="dashed")
     plt.plot(validation_losses, "r", marker="o", linestyle="dashed")
         
