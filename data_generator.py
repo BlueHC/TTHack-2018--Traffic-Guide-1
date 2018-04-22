@@ -50,6 +50,7 @@ class DataGenerator:
             22: 1.1,
             23: 1.0
         }
+        self.features = [-1 for i in range(0, 9)]
         pass
 
     def generate_weather(self):
@@ -72,6 +73,8 @@ class DataGenerator:
     def bike_factor_for_weather(self, weather):
         id = weather["WeatherTypeID"]
         temperature = weather["TemperatureInKelvin"] - 273.15
+        self.features[0] = id
+        self.features[1] = temperature
         # see https://openweathermap.org/weather-conditions
         if id in [800, 801, 951, 952, 953]:
             bike_factor = 1
@@ -173,7 +176,7 @@ class DataGenerator:
         bike_stations = self.mapper.bike_stations_in_range(lat1, lon1)
         lat2, lon2 = self.mapper.stop_to_coordinates(dest_station)
         dest_distance = self.mapper.get_distance(lat1, lon1, lat2, lon2)
-        bike_fact = self.get_bike_factor(weather, dest_distance)
+        bike_fact = self.get_bike_factor(weather, dest_distance) if bike_stations != [] else 0
         foot_fact = self.get_foot_factor(weather, dest_distance)
         near_bus_stations = self.mapper.bus_stations_in_range(lat1, lon1)
         possible_dest_stations = self.mapper.bus_stations_in_range(lat2, lon2)
@@ -202,7 +205,22 @@ class DataGenerator:
                 elif distance < 0.0035:
                     pt_fact = 0.7
         
+        self.generate_features(near_bus_stations, bike_stations, near_cars)
         return self.modal_split(foot_fact, bike_fact, car_fact, pt_fact)
+
+    def generate_features(self, near_bus_stations, bike_stations, near_cars):
+        self.features[6] = self.get_closest(near_bus_stations, 1)
+        self.features[7] = self.get_closest(bike_stations, 2)
+        self.features[8] = self.get_closest(near_cars, 2)
+        
+    def get_closest(self, locations_with_distances, dist_index):
+        if locations_with_distances == []:
+            return 5000
+        minimum = locations_with_distances[0][dist_index]
+        for loc in locations_with_distances:
+            if loc[1] < minimum:
+                minimum = loc[dist_index]
+        return minimum
 
     def modal_split(self, foot_fact, bike_fact, car_fact, pt_fact):
         """
@@ -214,15 +232,19 @@ class DataGenerator:
         base_bike = 0.25
         base_car = 0.25
         base_pt = 0.4
+        self.features[2] = base_foot
+        self.features[3] = base_bike
+        self.features[4] = base_car
+        self.features[5] = base_pt
         foot = base_foot * foot_fact
         bike = base_bike * bike_fact
         car = base_car * car_fact
         pt = base_pt * pt_fact
         normal_factor = foot + bike + car + pt
         if normal_factor > 0:
-            return foot / normal_factor, bike / normal_factor, car / normal_factor, pt / normal_factor
+            return (self.features, (foot / normal_factor, bike / normal_factor, car / normal_factor, pt / normal_factor))
         else:
-            return 0, 0, 0, 0
+            return (self.features, (0, 0, 0, 0))
 
     def get_used_capacity(self, route_id, station, time):
         route_capacities = self.routes_probs.loc[self.routes_probs[1] == route_id]

@@ -30,7 +30,7 @@ class Main:
                     else:
                         stations_to_target = reversed(route[:i])
                         for station in stations_to_target:
-                            walking_prob, bike_prob, car_prob, pt_prob = self.generator.generate_features_for_dest(stop, station, time)
+                            features, (walking_prob, bike_prob, car_prob, pt_prob) = self.generator.generate_features_for_dest(stop, station, time)
                             walkers += walking_prob * 1
                             bikers += bike_prob * 1
                             car_drivers += car_prob * 1
