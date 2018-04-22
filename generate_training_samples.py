@@ -49,5 +49,5 @@ if __name__ == "__main__":
     
     df = pd.DataFrame.from_dict(df_dict, orient="index")
     identifier = random.randint(0, 2000000)
-    df.to_csv("/data/export_test_{}.csv".format(identifier))
+    df.to_csv("data/export_test_{}.csv".format(identifier))
     
