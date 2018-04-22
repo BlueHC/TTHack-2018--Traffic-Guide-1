@@ -19,19 +19,23 @@ class Main:
             for i, stop in enumerate(route):
                 if stop == begin or stop == end:
                     if got_first_stop:
-                        walking_prob, bike_prob, car_prob, pt_prob = self.generator.generate_features_for_dest(stop, route[-1], time)
-                        walkers += walking_prob * 1
-                        bikers += bike_prob * 1
-                        car_drivers += car_prob * 1
-                        pt_users += pt_prob * 1
-                        counter += 1
+                        stations_to_target = route[i+1:]
+                        for station in stations_to_target:
+                            walking_prob, bike_prob, car_prob, pt_prob = self.generator.generate_features_for_dest(stop, station, time)
+                            walkers += walking_prob * 1
+                            bikers += bike_prob * 1
+                            car_drivers += car_prob * 1
+                            pt_users += pt_prob * 1
+                            counter += 1
                     else:
-                        walking_prob, bike_prob, car_prob, pt_prob = self.generator.generate_features_for_dest(stop, route[0], time)
-                        walkers += walking_prob * 1
-                        bikers += bike_prob * 1
-                        car_drivers += car_prob * 1
-                        pt_users += pt_prob * 1
-                        counter += 1
+                        stations_to_target = reversed(route[:i])
+                        for station in stations_to_target:
+                            walking_prob, bike_prob, car_prob, pt_prob = self.generator.generate_features_for_dest(stop, station, time)
+                            walkers += walking_prob * 1
+                            bikers += bike_prob * 1
+                            car_drivers += car_prob * 1
+                            pt_users += pt_prob * 1
+                            counter += 1
                         got_first_stop = True
         return walkers / counter, bikers / counter, car_drivers / counter, pt_users / counter
 
