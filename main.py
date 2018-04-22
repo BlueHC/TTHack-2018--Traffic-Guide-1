@@ -56,7 +56,7 @@ class Main:
                 if any(station1 == origin[0] for origin in near_bus_stations):
                     for z in range(i, len(route)):
                         if any(route[z] == dest[0] for dest in possible_dest_stations):    
-                            stranded_capacity = self.generator.get_used_capacity(routeid, station1, time)
+                            stranded_capacity = self.generator.get_used_capacity(route_id, station1, time)
         walkers = labels[0] * stranded_capacity
         bikers = labels[1] * stranded_capacity
         car_drivers = labels[2] * stranded_capacity
