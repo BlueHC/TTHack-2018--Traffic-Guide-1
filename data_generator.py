@@ -92,7 +92,7 @@ class DataGenerator:
 
     def get_foot_factor(self, weather, distance):
         print("Distance: %f" % distance)
-        base_prob = max(0, 1 - (distance * 100))
+        base_prob = max(0, 1 - (distance * 50))
         return base_prob * self.bike_factor_for_weather(weather)
 
     def _load_s_bahn_routes(self):
@@ -155,7 +155,7 @@ class DataGenerator:
         self.unaffected_routes = self.routes.copy().drop(affected_routes)
         return affected_routes
 
-    def generate_features_for_dest(self, start_station, dest_station, time):
+    def generate_features_for_dest(self, start_station, dest_station, time, weather=weatherApi.currentWeatherData()):
         """
         Generates modal probabilities for a person wanting to travel to dest_station
         :param start_station: The station where the person is stranded
@@ -164,8 +164,6 @@ class DataGenerator:
         """
         if start_station == dest_station:
             print("START STATION EQUALS DESTINATION")
-        # weather = weatherApi.currentWeatherData()
-        weather = self.generate_weather()
         bike_fact = self.bike_factor_for_weather(weather)
         lat1, lon1 = self.mapper.stop_to_coordinates(start_station)
         bike_stations = self.mapper.bike_stations_in_range(lat1, lon1)
@@ -231,6 +229,28 @@ class DataGenerator:
                 route_prob[i] = (stop, prob / total_prob)
             self.routes_probs.append((route_prob, self.routes["id"][j]))
         self.routes_probs = pd.DataFrame(self.routes_probs)
+
+    def generate_prob_mapping(self, start, end, route_index):
+        print("ROUTES: %d" % len(self.routes_probs))
+        (route, id) = self.routes_probs.iloc[route_index]
+        partial_route = []
+        prob_mapping = {}
+        for i, (station, prob) in enumerate(route):
+            if station == start:
+                if end != route[0][0]:
+                    print("not reversed")
+                    partial_route = route[i+1:]
+                else:
+                    print("reversed")
+                    partial_route = list(reversed(route[:i]))
+        if len(partial_route) == 0:
+            print("Partial Route is empty!")
+        total_prob = sum([prob for (station, prob) in partial_route])
+        for (station, prob) in partial_route:
+            prob_mapping[station] = prob / total_prob
+        return prob_mapping
+
+
 
 
 def _test_routing():
