@@ -31,8 +31,10 @@ def weatherFrontEnd():
     temperatureInCelsius = int(float(payloadjson['main']['temp']) - 273.15)
 
     today = int(datetime.datetime.today().day)
+    month = int(datetime.datetime.today().month)
     
     resultToday = {'Day': today,
+                   'Month': month,
               'TemperatureInCelsius': temperatureInCelsius,
               'WeatherTypeID': payloadjson['weather'][0]['id'],
               'WeatherMain': payloadjson['weather'][0]['main'],
@@ -55,6 +57,7 @@ def weatherFrontEnd():
 
         if Timestamp.hour == 14:
             day = int(Timestamp.day)
+            month = int(Timestamp.month)
             temperatureInCelsius = int(payloadForecastJson['list'][i]['main']['temp'])
             WeatherTypeID = payloadForecastJson['list'][i]['weather'][0]['id']
             WeatherMain = payloadForecastJson['list'][i]['weather'][0]['main']
@@ -62,6 +65,7 @@ def weatherFrontEnd():
             iconUrl = iconBaseUrl + str(payloadForecastJson['list'][i]['weather'][0]['icon']) + '.png'
 
             resultWeatherPerDay = {'Day': day,
+                                   'Month': month,
                                    'TemperatureInCelsius': temperatureInCelsius,
                                    'WeatherTypeID': WeatherTypeID,
                                    'WeatherMain': WeatherMain,
@@ -77,7 +81,7 @@ def weatherFrontEnd():
         del resultList[3:]
 
     resultList.insert(0,resultToday)
-    resultToJson = {'ListOfDays': resultList}
+    resultToJson = {'items': resultList}
     resultJson = json.dumps(resultToJson)
     
     # outout to file. Not sure if it works correctly.
