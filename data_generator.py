@@ -4,6 +4,7 @@ import numpy as np
 from route_coordinate_mapping import HVVCoordinateMapper
 from routing import load_routes
 import json
+import io
 
 
 class DataGenerator:
@@ -236,23 +237,25 @@ class DataGenerator:
         ###
         self.generate_features(near_bus_stations, bike_stations, near_cars)
         dicts = {}
-        routes_dict = {}
-        for i, alt_route in enumerate(self.alt_pt):
-            r_dict = {}
-            r_dict["Haltestelle"] = alt_route[1]
-            lat, lon = self.mapper.stop_to_coordinates(alt_route[1])
-            r_dict["Latitude"] = lat
-            r_dict["Longitude"] = lon
-            routes_dict["Verbindung" + str(i)] = r_dict
-        dicts["OPNVAlternativen"] = routes_dict
+        #routes_dict = {}
+        #for i, alt_route in enumerate(self.alt_pt):
+         #   r_dict = {}
+          #  r_dict["Haltestelle"] = alt_route[1]
+          #  lat, lon = self.mapper.stop_to_coordinates(alt_route[1])
+          #  r_dict["Latitude"] = lat
+          #  r_dict["Longitude"] = lon
+          #  routes_dict["Verbindung" + str(i)] = r_dict
+        #dicts["OPNVAlternativen"] = routes_dict
+        dicts["Sperrbeginn"] = start_station
         rad_dict = {}
         rad_dict["AnzahlFahrraeder"] = self.mapper.get_bike_capacity(lat1, lon1)
         dicts["StadtRAD"] = rad_dict
         sm_dict = {}
         sm_dict["AnzahlSharingMobility"] = self.mapper.get_car_capacity(lat1, lon1)
         dicts["SharingMobility"] = sm_dict
-        with open('data/misc.txt', 'w', encoding='UTF-8') as f:
-            json.dump(dicts, f, ensure_ascii=False)
+        with io.open('data/misc.txt', mode='a', encoding='UTF-8') as f:
+            f.seek(0, 2)
+            json.dump(dicts, f, ensure_ascii=False, indent=2)
 
             ###
         self.generate_features(near_bus_stations, bike_stations, near_cars)
