@@ -90,8 +90,11 @@ class DataGenerator:
             bike_factor = bike_factor * 1.2
         return bike_factor
 
+    def get_bike_factor(self, weather, distance):
+        base_prob = max(0, 1 - (distance * 15))
+        return base_prob * self.bike_factor_for_weather(weather)
+
     def get_foot_factor(self, weather, distance):
-        print("Distance: %f" % distance)
         base_prob = max(0, 1 - (distance * 100))
         return base_prob * self.bike_factor_for_weather(weather)
 
@@ -164,11 +167,11 @@ class DataGenerator:
         """
         # weather = weatherApi.currentWeatherData()
         weather = self.generate_weather()
-        bike_fact = self.bike_factor_for_weather(weather)
         lat1, lon1 = self.mapper.stop_to_coordinates(start_station)
         bike_stations = self.mapper.bike_stations_in_range(lat1, lon1)
         lat2, lon2 = self.mapper.stop_to_coordinates(dest_station)
         dest_distance = self.mapper.get_distance(lat1, lon1, lat2, lon2)
+        bike_fact = self.get_bike_factor(weather, dest_distance)
         foot_fact = self.get_foot_factor(weather, dest_distance)
         near_bus_stations = self.mapper.bus_stations_in_range(lat1, lon1)
         possible_dest_stations = self.mapper.bus_stations_in_range(lat2, lon2)
