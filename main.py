@@ -1,4 +1,5 @@
 import numpy as np
+import json
 from data_generator import DataGenerator
 
 
@@ -56,26 +57,53 @@ class Main:
             route = route_with_id["stations"]
             route_id = route_with_id["id"]
             lat1, lon1 = self.generator.mapper.stop_to_coordinates(begin)
-            lat2, lon2 = self.generator.mapper.stop_to_coordinates(end)
-            start_near_stations = self.generator.mapper.bus_stations_in_range(lat1, lon1)
-            dest_near_stations = self.generator.mapper.bus_stations_in_range(lat2, lon2)
+            #lat2, lon2 = self.generator.mapper.stop_to_coordinates(end)
             for i, station1 in enumerate(route):
-                if any(station1 == origin[0] for origin in start_near_stations):
-                    for z in range(i, len(route)):
-                        if any(route[z] == dest[0] for dest in dest_near_stations):
-                            stranded_capacity = self.generator.get_used_capacity(route_id, station1, time)
+                if station1 == begin:
+                    # simplification for the sake of progress
+                    stranded_capacity = self.generator.get_used_capacity(route_id, station1, time) * 250
         walkers = labels[0] * stranded_capacity
         bikers = labels[1] * stranded_capacity
         car_drivers = labels[2] * stranded_capacity
         pt_users = labels[3] * stranded_capacity
         lat, lon = self.generator.mapper.stop_to_coordinates(begin)
-        bike_capacity = self.generator.mapper.get_bike_capacity(lat, lon)
-        car_capacity = self.generator.mapper.get_car_capacity(lat, lon)
-        pt_capacity = self.generator.mapper.get_opvn_capacity(lat, lon)
+        bike_capacity = self.generator.mapper.get_bike_capacity(lat1, lon1)
+        car_capacity = self.generator.mapper.get_car_capacity(lat1, lon1)
+        pt_capacity = self.generator.mapper.get_opvn_capacity(lat1, lon1, stranded_capacity)
         return stranded_capacity, walkers, pt_users, min(pt_users, pt_capacity), bikers, min(bikers, bike_capacity),\
                car_drivers, min(car_drivers, car_capacity)
+
+def pack_to_dict(strand, walk, pt, pt_use, bike, bike_use, car, car_use):
+    dict = {}
+    dict["stranded_passengers"] = strand
+    dict["walking"] = walk
+    dict["want_to_use_public_transport"] = pt
+    dict["actually_use_public_transport"] = pt_use
+    dict["want_to_ride_bike"] = bike
+    dict["actually_ride_bike"] = bike_use
+    dict["want_to_drive_car"] = car
+    dict["actually_drive_car"] = car_use
+    return dict
+
 
 if __name__ == "__main__":
     main = Main()
     #print(main.add_disruption("Hamburg Hbf", "Jungfernstieg"))
-    print(main.generate_plotly_features("Hamburg Hbf", "Jungfernstieg"))
+    with open('data/plots.txt', 'w') as f:
+        f.write("Test")
+    features = {}
+    strand, walk, pt, pt_use, bike, bike_use, car, car_use = main.generate_plotly_features("Lübecker Straße", "Lohmühlenstraße")
+    features["Lübecker Straße"] = pack_to_dict(strand, walk, pt, pt_use, bike, bike_use, car, car_use)
+    strand, walk, pt, pt_use, bike, bike_use, car, car_use = main.generate_plotly_features("Hamburg Hbf", "Jungfernstieg")
+    features["Hamburg Hbf"] = pack_to_dict(strand, walk, pt, pt_use, bike, bike_use, car, car_use)
+    strand, walk, pt, pt_use, bike, bike_use, car, car_use = main.generate_plotly_features("Kellinghusenstraße", "Klosterstern")
+    features["Kellinghusenstraße"] = pack_to_dict(strand, walk, pt, pt_use, bike, bike_use, car, car_use)
+    strand, walk, pt, pt_use, bike, bike_use, car, car_use = main.generate_plotly_features("Steinfurther Allee", "Mümmelmannsberg")
+    features["Steinfurther Allee"] = pack_to_dict(strand, walk, pt, pt_use, bike, bike_use, car, car_use)
+    strand, walk, pt, pt_use, bike, bike_use, car, car_use = main.generate_plotly_features("Poppenbüttel", "Wellingsbüttel")
+    features["Poppenbüttel"] = pack_to_dict(strand, walk, pt, pt_use, bike, bike_use, car, car_use)
+    strand, walk, pt, pt_use, bike, bike_use, car, car_use = main.generate_plotly_features("Diebsteich", "Holstenstraße")
+    features["Diebsteich"] = pack_to_dict(strand, walk, pt, pt_use, bike, bike_use, car, car_use)
+    print(features)
+    with open('data/plots.txt', 'w') as f:
+        json.dump(features, f)

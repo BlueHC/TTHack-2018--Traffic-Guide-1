@@ -70,6 +70,9 @@ class DataGenerator:
 
         return {"WeatherTypeID": weather_id, "TemperatureInKelvin": temp}
 
+    def generate_good_weather(self):
+        weather_id = 800
+
     def bike_factor_for_weather(self, weather):
         id = weather["WeatherTypeID"]
         temperature = weather["TemperatureInKelvin"] - 273.15
@@ -98,7 +101,6 @@ class DataGenerator:
         return base_prob * self.bike_factor_for_weather(weather)
 
     def get_foot_factor(self, weather, distance):
-        print("Distance: %f" % distance)
         base_prob = max(0, 1 - (distance * 50))
         return base_prob * self.bike_factor_for_weather(weather)
 
@@ -226,7 +228,6 @@ class DataGenerator:
         Returns probabilities for 4 travel modalities based on a static modal split and a given condition-dependent
         collection of factors for each modality
         """
-        print("Factors: %f, %f, %f, %f" % (foot_fact, bike_fact, car_fact, pt_fact))
         base_foot = 0.1
         base_bike = 0.25
         base_car = 0.25
