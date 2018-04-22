@@ -8,7 +8,7 @@ import random
 if __name__ == "__main__":
 
     valid_pairs = []
-    good_ids = pd.read_csv("../good_trips.csv").values.reshape(-1)
+    good_ids = pd.read_csv("data/good_trips.csv").values.reshape(-1)
     stops = pd.read_csv("data/stops.txt", usecols=["stop_id", "stop_name"], 
                         dtype={"stop_id":"str"})
     stop_times = pd.read_csv("data/stop_times.txt", usecols=["stop_id", "trip_id", "stop_sequence"], dtype={"stop_id":"str"})
