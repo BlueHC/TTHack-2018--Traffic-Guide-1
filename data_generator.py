@@ -126,9 +126,9 @@ class DataGenerator:
         :param lon_strand: longitude where person is stranded
         :return: a factor for determining the popularity of taking other public transportation
         """
-        if self.alt_pt == []:
-            pt_fact = 0
-        else:
+        pt_fact = 0
+        if self.alt_pt != []:
+            pt_fact = 0.5
             for alt in self.alt_pt:
                 lat_alt, lon_alt = self.mapper.stop_to_coordinates(alt[1])
                 distance = self.mapper.get_distance(lat_strand, lon_strand, lat_alt, lon_alt)
