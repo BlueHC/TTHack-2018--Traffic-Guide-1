@@ -4,6 +4,7 @@ import numpy as np
 import scipy.stats as sp
 from route_coordinate_mapping import HVVCoordinateMapper
 from routing import load_routes
+import json
 
 
 class DataGenerator:
@@ -223,6 +224,29 @@ class DataGenerator:
                 elif distance < 0.0035:
                     pt_fact = 0.7
         
+        
+        ###
+        self.generate_features(near_bus_stations, bike_stations, near_cars)
+        dicts = {}        
+        routes_dict = {}
+        for i, alt_route in enumerate(self.alt_pt): 
+            r_dict = {}
+            r_dict["Haltestelle"] = alt_route[1]
+            lat, lon = self.mapper.stop_to_coordinates(alt_route[1])
+            r_dict["Latitude"] = lat
+            r_dict["Longitude"] = lon
+            routes_dict["Verbindung" + str(i)] = r_dict
+        dicts["OPNVAlternativen"] = routes_dict
+        rad_dict = {}
+        rad_dict["AnzahlFahrraeder"] = self.mapper.get_bike_capacity(lat1, lon1)
+        dicts["StadtRAD"] = rad_dict
+        sm_dict = {}
+        sm_dict["AnzahlSharingMobility"] = self.mapper.get_car_capacity(lat1, lon1)
+        dicts["SharingMobility"] = sm_dict
+        with open('data/misc.txt', 'w', encoding='UTF-8') as f:
+            json.dump(dicts, f, ensure_ascii=False)       
+        exit()
+        ###
         self.generate_features(near_bus_stations, bike_stations, near_cars)
         return self.modal_split(foot_fact, bike_fact, car_fact, pt_fact)
 
