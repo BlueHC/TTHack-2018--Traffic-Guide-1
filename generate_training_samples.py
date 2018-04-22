@@ -36,17 +36,26 @@ if __name__ == "__main__":
         feat, out = m.add_disruption(*pair[0], time=random.randint(0, 23))
         if feat == []:
             continue
-        ins.append(feat)
-        outs.append(out)
+        print("feat", feat)
+        print("out", out)
+        print("ins before:", ins)
+        ins.append(feat[:])
+        print("ins after", ins)
+        outs.append(out[:])
         print("------------------- Finished {} pairs".format(i))
     
     ins = np.array(ins)
     outs = np.array(outs)
+    
+    print(ins)
+    print(outs)
     total = np.concatenate((ins, outs), axis=1)
+    print(total)
     df_dict = {}
     for i in range(len(total)):
         df_dict[i] = total[i]
     
+    print(df_dict)
     df = pd.DataFrame.from_dict(df_dict, orient="index")
     identifier = random.randint(0, 2000000)
     df.to_csv("data/export_test_{}.csv".format(identifier))
