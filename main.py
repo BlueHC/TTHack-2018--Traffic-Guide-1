@@ -11,7 +11,7 @@ class Main:
 
     def add_disruption(self, begin, end, time=12):
         features_printed=False
-        weather = self.generator.generate_good_weather()
+        weather = self.generator.generate_weather()
         affected_routes = self.generator.filter_disrupted_routes(begin, end)
         walkers = 0
         bikers = 0
@@ -54,7 +54,6 @@ class Main:
     def generate_plotly_features(self, begin, end, time=12):
         (features, labels) = self.add_disruption(begin, end)
         for index, route_with_id in self.generator.routes.iterrows():
-            print(index)
             route = route_with_id["stations"]
             route_id = route_with_id["id"]
             lat1, lon1 = self.generator.mapper.stop_to_coordinates(begin)
@@ -91,21 +90,19 @@ def pack_to_dict(strand, walk, pt, pt_use, bike, bike_use, car, car_use):
 if __name__ == "__main__":
     main = Main()
     #print(main.add_disruption("Hamburg Hbf", "Jungfernstieg"))
-    with open('data/plots.txt', 'w') as f:
-        f.write("Test")
     features = {}
     strand, walk, pt, pt_use, bike, bike_use, car, car_use = main.generate_plotly_features("Lübecker Straße", "Lohmühlenstraße")
-    features["Lübecker Straße"] = pack_to_dict(strand, walk, pt, pt_use, bike, bike_use, car, car_use)
+    features["Lohmühlenstraße"] = pack_to_dict(strand, walk, pt, pt_use, bike, bike_use, car, car_use)
     strand, walk, pt, pt_use, bike, bike_use, car, car_use = main.generate_plotly_features("Hamburg Hbf", "Jungfernstieg")
-    features["Hamburg Hbf"] = pack_to_dict(strand, walk, pt, pt_use, bike, bike_use, car, car_use)
+    features["Jungfernstieg"] = pack_to_dict(strand, walk, pt, pt_use, bike, bike_use, car, car_use)
     strand, walk, pt, pt_use, bike, bike_use, car, car_use = main.generate_plotly_features("Kellinghusenstraße", "Klosterstern")
-    features["Kellinghusenstraße"] = pack_to_dict(strand, walk, pt, pt_use, bike, bike_use, car, car_use)
+    features["Klosterstern"] = pack_to_dict(strand, walk, pt, pt_use, bike, bike_use, car, car_use)
     strand, walk, pt, pt_use, bike, bike_use, car, car_use = main.generate_plotly_features("Steinfurther Allee", "Mümmelmannsberg")
-    features["Steinfurther Allee"] = pack_to_dict(strand, walk, pt, pt_use, bike, bike_use, car, car_use)
+    features["Mümmelmannsberg"] = pack_to_dict(strand, walk, pt, pt_use, bike, bike_use, car, car_use)
     strand, walk, pt, pt_use, bike, bike_use, car, car_use = main.generate_plotly_features("Poppenbüttel", "Wellingsbüttel")
-    features["Poppenbüttel"] = pack_to_dict(strand, walk, pt, pt_use, bike, bike_use, car, car_use)
+    features["Wellingbüttel"] = pack_to_dict(strand, walk, pt, pt_use, bike, bike_use, car, car_use)
     strand, walk, pt, pt_use, bike, bike_use, car, car_use = main.generate_plotly_features("Diebsteich", "Holstenstraße")
-    features["Diebsteich"] = pack_to_dict(strand, walk, pt, pt_use, bike, bike_use, car, car_use)
+    features["Holstenstraße"] = pack_to_dict(strand, walk, pt, pt_use, bike, bike_use, car, car_use)
     print(features)
     with io.open('data/plots.json', 'w', encoding='utf-8') as f:
         json.dump(features, f)

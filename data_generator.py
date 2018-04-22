@@ -100,14 +100,28 @@ class DataGenerator:
         return bike_factor
 
     def get_bike_factor(self, weather, distance):
+        """
+        :param weather: weather container containing general weather conditions (e.g. cloudy) and temperature
+        :param distance: euclidean distance to estimated destination
+        :return: A factor for determining the popularity of bikes (higher -> more people ride bikes)
+        """
         base_prob = max(0, 1 - (distance * 15))  # 100 / 15 ~= 6.5 km max. distance
         return base_prob * self.bike_factor_for_weather(weather)
 
     def get_foot_factor(self, weather, distance):
+        """
+        :param weather: weather container containing general weather conditions (e.g. cloudy) and temperature
+        :param distance: euclidean distance to estimated destination
+        :return: A factor for determining the popularity of walking (higher -> more people walk to their destination)
+        """
         base_prob = max(0, 1 - (distance * 35))  # 100 / 35 ~= 3 km max. distance
         return base_prob * self.bike_factor_for_weather(weather)
 
     def _load_s_bahn_routes(self):
+        """
+        Would be used to load actual S-Bahn data to replace the generated dummy data.
+        Currently not in use due to insufficient time for merging with the routes gotten from the HVV data
+        """
         print('Loading S-Bahn Routes')
         df = pd.read_csv(filepath_or_buffer="data/Hackathon.csv", delimiter=";")
         current_route = [248206]
@@ -261,7 +275,7 @@ class DataGenerator:
             route_prob = []
             total_prob = 0
             for i, stop in enumerate(route):
-                prob = 1 - (abs(i / len(route) - 0.5))  # approximate distribution of popularity of stations
+                prob = 1 - (abs((i / len(route)) - 0.5))  # approximate distribution of popularity of stations
                 total_prob += prob
                 route_prob.append((stop, prob))
             for i, (stop, prob) in enumerate(route_prob):
@@ -271,7 +285,6 @@ class DataGenerator:
         self.routes_probs = pd.DataFrame(self.routes_probs)
 
     def generate_prob_mapping(self, start, end, route_index):
-        print("ROUTES: %d" % len(self.routes_probs))
         (route, id) = self.routes_probs.iloc[route_index]
         partial_route = []
         prob_mapping = {}

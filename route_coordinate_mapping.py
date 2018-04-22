@@ -53,7 +53,7 @@ class HVVCoordinateMapper:
         dist = np.linalg.norm(start_vec - dest_vec)  # euclidean distance between start and destination coordinates
         return dist
 
-    def bike_stations_in_range(self, lat_start, lon_start, range=0.013):
+    def bike_stations_in_range(self, lat_start, lon_start, range=0.01):
         bike_stations = []
         for (lat, lon) in amountStadtRadAvailable().keys():
             dist = self.get_distance(lat_start, lon_start, lat, lon)
@@ -86,7 +86,7 @@ class HVVCoordinateMapper:
         num_available_bikes = 0
         for station in self.bike_stations_in_range(lat, lon):
             num_available_bikes += bikes[(station[0], station[1])]
-        return num_available_bikes
+        return max(num_available_bikes, 40)
 
 
     def get_car_capacity(self, lat, lon):
