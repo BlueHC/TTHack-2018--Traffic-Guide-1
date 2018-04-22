@@ -45,6 +45,22 @@ class Main:
                         got_first_stop = True
         return (features, np.array([walkers / norm_fact, bikers / norm_fact, car_drivers / norm_fact, pt_users / norm_fact]))
 
+    def return_json(self, json_text):
+        begin = ""
+        end = ""
+        (features, labels) = self.add_disruption(begin, end)
+        stranded_capacity = self.generator.get_used_capacity()
+        walkers = labels[0] * stranded_capacity
+        bikers = labels[1] * stranded_capacity
+        car_drivers = labels[2] * stranded_capacity
+        pt_users = labels[3] * stranded_capacity
+        lat, lon = self.generator.mapper.stop_to_coordinates(begin)
+        bike_capacity = self.generator.mapper.get_bike_capacity(lat, lon)
+        car_capacity = self.generator.mapper.get_car_capacity(lat, lon)
+        pt_capacity = self.generator.mapper.get_opvn_capacity(lat, lon)
+        return stranded_capacity, walkers, pt_users, min(pt_users, pt_capacity), bikers, min(bikers, bike_capacity),\
+               car_drivers, min(car_drivers, car_capacity)
+
 if __name__ == "__main__":
     main = Main()
     print(main.add_disruption("Hamburg Hbf", "Jungfernstieg"))

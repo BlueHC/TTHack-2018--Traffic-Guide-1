@@ -4,6 +4,7 @@ import gpxpy
 import math
 import urllib.error
 from sharingMobilityAPI import sharingMobilityAroundLocation
+from stadtRadApi import amountStadtRadAvailable
 
 
 class HVVCoordinateMapper:
@@ -81,11 +82,15 @@ class HVVCoordinateMapper:
         return nearby_cars
 
     def get_bike_capacity(self, lat, lon):
-        bike_stations = self.bike_stations_in_range(lat, lon)
-        # return sum([get_station_cap(*s[:2]) for s in bike_stations)
+        bikes = amountStadtRadAvailable()
+        num_available_bikes = 0
+        for station in self.bike_stations_in_range(lat, lon):
+            num_available_bikes += bikes[(station[0], station[1])]
+        return num_available_bikes
+
 
     def get_car_capacity(self, lat, lon):
-        return
+        return len(self.cars_in_range(lat, lon))
 
     def get_opvn_capacity(self, lat, lon):
         return
