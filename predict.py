@@ -18,7 +18,11 @@ class Predictor():
             distribution += output * weight
         
         return distribution
-        
+    
+    def predict2(self, disruption):
+        disruption = Variable(torch.from_numpy(disruption).float())
+        output = self.model(disruption).data.numpy()
+        return output /= sum(output)
             
 if __name__ == "__main__":
     model_path = "learning-rate=0.001_weight-decay=1e-05.model"
