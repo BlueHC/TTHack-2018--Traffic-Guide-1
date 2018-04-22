@@ -19,22 +19,22 @@ class Main:
             for i, stop in enumerate(route):
                 if stop == begin or stop == end:
                     if got_first_stop:
-                        walking_prob, bike_prob, car_prob, pt_prob = self.generator.generate_features_for_dest(stop, route[-1])
-                        #TODO: replace 1 with capacity
+                        walking_prob, bike_prob, car_prob, pt_prob = self.generator.generate_features_for_dest(stop, route[-1], time)
                         walkers += walking_prob * 1
                         bikers += bike_prob * 1
                         car_drivers += car_prob * 1
                         pt_users += pt_prob * 1
                         counter += 1
                     else:
-                        walking_prob, bike_prob, car_prob, pt_prob = self.generator.generate_features_for_dest(stop, route[0])
+                        walking_prob, bike_prob, car_prob, pt_prob = self.generator.generate_features_for_dest(stop, route[0], time)
                         walkers += walking_prob * 1
                         bikers += bike_prob * 1
                         car_drivers += car_prob * 1
                         pt_users += pt_prob * 1
                         counter += 1
+                        got_first_stop = True
         return walkers / counter, bikers / counter, car_drivers / counter, pt_users / counter
 
 if __name__ == "__main__":
     main = Main()
-    main.add_disruption("Hamburg Hbf", "Jungfernstieg")
+    print(main.add_disruption("Hamburg Hbf", "Jungfernstieg"))

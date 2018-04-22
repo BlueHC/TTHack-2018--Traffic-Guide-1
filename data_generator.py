@@ -205,9 +205,9 @@ class DataGenerator:
         collection of factors for each modality
         """
         print("Factors: %f, %f, %f, %f" % (foot_fact, bike_fact, car_fact, pt_fact))
+        base_foot = 0.1
         base_bike = 0.25
         base_car = 0.25
-        base_foot = 0.1
         base_pt = 0.4
         foot = base_foot * foot_fact
         bike = base_bike * bike_fact
