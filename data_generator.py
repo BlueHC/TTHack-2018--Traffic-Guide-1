@@ -245,7 +245,7 @@ class DataGenerator:
         dicts["SharingMobility"] = sm_dict
         with open('data/misc.txt', 'w', encoding='UTF-8') as f:
             json.dump(dicts, f, ensure_ascii=False)       
-        exit()
+        
         ###
         self.generate_features(near_bus_stations, bike_stations, near_cars)
         return self.modal_split(foot_fact, bike_fact, car_fact, pt_fact)
