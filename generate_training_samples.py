@@ -28,7 +28,7 @@ if __name__ == "__main__":
             valid_pairs.append([(r.stop_name, r.next_stop)])
         
     m = Main()
-    pairs = random.sample(valid_pairs, 1)
+    pairs = random.sample(valid_pairs, 10)
     
     ins = []
     outs = []
