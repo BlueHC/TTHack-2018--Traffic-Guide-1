@@ -1,4 +1,4 @@
-from route_coordinate_mapping import HVVCoordinateMapper
+import numpy as np
 from data_generator import DataGenerator
 
 
@@ -23,7 +23,7 @@ class Main:
                         station_prob_mapping = self.generator.generate_prob_mapping(stop, route[-1], affected_routes[index])
                         stations_to_target = route[i+1:]
                         for station in stations_to_target:
-                            walking_prob, bike_prob, car_prob, pt_prob = self.generator.generate_features_for_dest(stop, station, time, weather=weather)
+                            features, (walking_prob, bike_prob, car_prob, pt_prob) = self.generator.generate_features_for_dest(stop, station, time, weather=weather)
                             walkers += walking_prob * station_prob_mapping[station]
                             bikers += bike_prob * station_prob_mapping[station]
                             car_drivers += car_prob * station_prob_mapping[station]
@@ -38,7 +38,7 @@ class Main:
                             car_drivers += car_prob * station_prob_mapping[station]
                             pt_users += pt_prob * station_prob_mapping[station]
                         got_first_stop = True
-        return walkers / len(routes), bikers / len(routes), car_drivers / len(routes), pt_users / len(routes)
+        return (features, np.array([walkers / len(routes), bikers / len(routes), car_drivers / len(routes), pt_users / len(routes)]))
 
 if __name__ == "__main__":
     main = Main()
