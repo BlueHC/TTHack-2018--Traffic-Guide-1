@@ -53,15 +53,15 @@ class HVVCoordinateMapper:
         dist = np.linalg.norm(start_vec - dest_vec)  # euclidean distance between start and destination coordinates
         return dist
 
-    def bike_stations_in_range(self, lat_start, lon_start, range=0.008):
+    def bike_stations_in_range(self, lat_start, lon_start, range=0.010):
         bike_stations = []
-        for lat, lon in self.bike_coordinates:
+        for (lat, lon) in amountStadtRadAvailable().keys():
             dist = self.get_distance(lat_start, lon_start, lat, lon)
             if dist <= range:
                 bike_stations.append((lat, lon, dist))
         return bike_stations
 
-    def bus_stations_in_range(self, lat_start, lon_start, range=0.007):
+    def bus_stations_in_range(self, lat_start, lon_start, range=0.008):
         stations = []
         for name, index in self.stop_to_index.items():
             (lat, lon) = self.index_to_lat_lon[index]
@@ -70,7 +70,7 @@ class HVVCoordinateMapper:
                 stations.append((name, dist))
         return stations
 
-    def cars_in_range(self, lat_start, lon_start, range=0.005):
+    def cars_in_range(self, lat_start, lon_start, range=0.0065):
         nearby_cars = []
         try:
             for car in sharingMobilityAroundLocation(lat_start, lon_start):
@@ -92,8 +92,8 @@ class HVVCoordinateMapper:
     def get_car_capacity(self, lat, lon):
         return len(self.cars_in_range(lat, lon))
 
-    def get_opvn_capacity(self, lat, lon):
-        return
+    def get_opvn_capacity(self, lat, lon, stranded_ppl):
+        return 250 - stranded_ppl
 
     def get_passenger_distribution(self, lat, lon, num_passengers, predictor,
                                    scenarios, weights):

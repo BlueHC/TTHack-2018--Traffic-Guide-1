@@ -49,17 +49,20 @@ class Main:
             print("Error for connection {} to {}".format(begin, end))
             return [], []
 
-    def return_json(self, json_text, time=12):
-        begin = ""
-        end = ""
+    def generate_plotly_features(self, begin, end, time=12):
         (features, labels) = self.add_disruption(begin, end)
         for index, route_with_id in self.generator.routes.iterrows():
+            print(index)
             route = route_with_id["stations"]
             route_id = route_with_id["id"]
+            lat1, lon1 = self.generator.mapper.stop_to_coordinates(begin)
+            lat2, lon2 = self.generator.mapper.stop_to_coordinates(end)
+            start_near_stations = self.generator.mapper.bus_stations_in_range(lat1, lon1)
+            dest_near_stations = self.generator.mapper.bus_stations_in_range(lat2, lon2)
             for i, station1 in enumerate(route):
-                if any(station1 == origin[0] for origin in near_bus_stations):
+                if any(station1 == origin[0] for origin in start_near_stations):
                     for z in range(i, len(route)):
-                        if any(route[z] == dest[0] for dest in possible_dest_stations):    
+                        if any(route[z] == dest[0] for dest in dest_near_stations):
                             stranded_capacity = self.generator.get_used_capacity(route_id, station1, time)
         walkers = labels[0] * stranded_capacity
         bikers = labels[1] * stranded_capacity
@@ -74,4 +77,5 @@ class Main:
 
 if __name__ == "__main__":
     main = Main()
-    print(main.add_disruption("Hamburg Hbf", "Jungfernstieg"))
+    #print(main.add_disruption("Hamburg Hbf", "Jungfernstieg"))
+    print(main.generate_plotly_features("Hamburg Hbf", "Jungfernstieg"))

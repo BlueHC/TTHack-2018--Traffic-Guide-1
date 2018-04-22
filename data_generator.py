@@ -214,7 +214,7 @@ class DataGenerator:
         
     def get_closest(self, locations_with_distances, dist_index):
         if locations_with_distances == []:
-            return 5000
+            return 5
         minimum = locations_with_distances[0][dist_index]
         for loc in locations_with_distances:
             if loc[1] < minimum:
