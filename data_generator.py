@@ -99,6 +99,17 @@ class DataGenerator:
             bike_factor = bike_factor * 1.2
         return bike_factor
 
+    def get_car_factor(self, weather, distance, num_near_cars):
+        """
+        :param weather: weather container containing general weather conditions (e.g. cloudy) and temperature
+        :param distance: euclidean distance to estimated destination
+        :return: A factor for determining the popularity of bikes (higher -> more people ride bikes)
+        """
+        car_fact = len(num_near_cars) / 5
+        car_fact = car_fact * (1 - self.bike_factor_for_weather(weather)) # inverse correlation with good weather
+        car_fact = car_fact * (distance/10)  # proportional correlation with distance (1.0 distance ~= 100 km)
+        return car_fact
+
     def get_bike_factor(self, weather, distance):
         """
         :param weather: weather container containing general weather conditions (e.g. cloudy) and temperature
@@ -207,9 +218,8 @@ class DataGenerator:
                     for z in range(i, len(route)):
                         if any(route[z] == dest[0] for dest in possible_dest_stations):
                             self.alt_pt.append((route_id, station1, self.get_used_capacity(route_id, station1, time)))
-
         near_cars = self.mapper.cars_in_range(lat1, lon1)
-        car_fact = len(near_cars) / 20
+        car_fact = self.get_car_factor(weather, dest_distance, len(near_cars))
         pt_fact = 0.5
         if self.alt_pt == []:
             pt_fact = 0
