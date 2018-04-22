@@ -45,7 +45,7 @@ class Main:
                                 pt_users += pt_prob * station_prob_mapping[station]
                             got_first_stop = True
             return (features, np.array([walkers / norm_fact, bikers / norm_fact, car_drivers / norm_fact, pt_users / norm_fact]))
-        except:
+        except Exception:
             print("Error for connection {} to {}".format(begin, end))
             return [], []
 

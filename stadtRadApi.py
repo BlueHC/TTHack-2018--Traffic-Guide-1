@@ -15,8 +15,8 @@ def amountStadtRadAvailable():
     numberStations = len(payloadjson['marker'])
     amountBikesTotal = 0
     for i in range(0, numberStations):
-        resultLat = payloadjson['marker'][i]['lat']
-        resultLng = payloadjson['marker'][i]['lng']
+        resultLat = float(payloadjson['marker'][i]['lat'])
+        resultLng = float(payloadjson['marker'][i]['lng'])
         resultAmount = len(payloadjson['marker'][i]['hal2option']['bikelist'])
         resultMap[(resultLat, resultLng)] = resultAmount
         amountBikesTotal += resultAmount
